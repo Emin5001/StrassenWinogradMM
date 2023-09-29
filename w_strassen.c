@@ -1,47 +1,202 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-// #include <papi.h>
+#include <papi.h>
 #include "matrix.h" 
 
-double rand_from   (double, double);
-Matrix w_strassen  (Matrix, const Matrix, const Matrix, int);
-void naive         (Matrix, const Matrix, const Matrix, int);
-void print_matrix  (Matrix, char *);
-void check_valid   (Matrix, Matrix, int);
+int PAPI_measurement ();
+void CLOCK_REALTIME_measurement ();
+double rand_from      (double, double);
+Matrix w_strassen     (Matrix, const Matrix, const Matrix, int);
+void naive            (Matrix, const Matrix, const Matrix, int);
+void print_matrix     (Matrix, char *);
+void check_valid      (Matrix, Matrix, int);
+void reset_matrices   (Matrix, Matrix, Matrix, int);
+void print_one_data   (long long *, int);
+void print_two_data   (long long *, int);
+void print_three_data (long long *, int);
 
-uint32_t sizes[1] = {8};
+uint32_t sizes[12] = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
+
+int PAPI_one[3] = 
+{
+    PAPI_TOT_INS,
+    PAPI_LST_INS,
+    PAPI_FP_INS,
+};
+
+int PAPI_two[4] = 
+{
+    PAPI_L1_DCA,
+    PAPI_L1_DCM,
+    PAPI_L2_DCA,
+    PAPI_L2_DCM,
+};
+
+int PAPI_three[1] = { PAPI_TOT_CYC };
 
 int main () 
 {
+    // PAPI_measurement();
+    CLOCK_REALTIME_measurement();
+    return 0;
+}
+
+void CLOCK_REALTIME_measurement ()
+{
     Matrix matrixA, matrixB, matrixC, matrixD;
 
-    // malloc all matrices.
-    MATRIX_INITIALIZER (matrixA, sizes[0], sizes[0]);
-    MATRIX_INITIALIZER (matrixB, sizes[0], sizes[0]);
-    MATRIX_INITIALIZER (matrixC, sizes[0], sizes[0]);
-    MATRIX_INITIALIZER (matrixD, sizes[0], sizes[0]);
-
     srand(time (NULL));
-    for (int i = 0; i < sizes[0]; i++) {
-        for (int j = 0; j < sizes[0]; j++) {
-            matrixA.values[i][j] = rand_from(1, 3);
-            matrixB.values[i][j] = rand_from(1, 3);
+    for (int size = 0; size < 12; size++) 
+    {
+        MATRIX_INITIALIZER (matrixA, sizes[size], sizes[size]);
+        MATRIX_INITIALIZER (matrixB, sizes[size], sizes[size]);
+        MATRIX_INITIALIZER (matrixC, sizes[size], sizes[size]);
+        MATRIX_INITIALIZER (matrixD, sizes[size], sizes[size]);
+
+        reset_matrices(matrixA, matrixB, matrixC, sizes[size]);
+        struct timespec start_time, end_time;
+        long long elapsed_ns;
+
+        printf("\033[1;32mTiming data for winograd_strassen at size: %d\033[0m ", sizes[size]);
+
+        if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start_time) == -1) 
+        {
+            printf("An error has occured\n");
+            return;
         }
+
+        w_strassen(matrixC, matrixA, matrixB, sizes[size]);
+
+        if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end_time) == -1) 
+        {
+            printf("An error has occured\n");
+            return;
+        }
+        
+        elapsed_ns = (end_time.tv_sec - start_time.tv_sec) * 1000000000LL + (end_time.tv_nsec - start_time.tv_nsec);
+        printf("CLOCK_THREAD_CPUTIME_ID Clock elapsed: %lld ns\n", elapsed_ns);
+        matrixA.Delete(matrixA.values);
+        matrixB.Delete(matrixB.values);
+        matrixC.Delete(matrixC.values);
     }
 
-    print_matrix(matrixA, "Matrix A");
-    print_matrix(matrixB, "Matrix B");
+}
 
-    // now do the matrix multiplication.
-    w_strassen(matrixC, matrixA, matrixB, sizes[0]);
-    naive(matrixD, matrixA, matrixB, sizes[0]);
+int PAPI_measurement () 
+{
+    if (PAPI_library_init(PAPI_VER_CURRENT) < 0) 
+    {
+        fprintf(stderr, "Error intializing PAPI!");
+        return -1;
+    }
 
-    print_matrix(matrixC, "Matrix C");
-    print_matrix(matrixD, "Matrix D");
+    if (PAPI_OK != PAPI_query_event(PAPI_TOT_INS)) fprintf(stderr, "Cannot count PAPI_TOT_INS.\n");
+    if (PAPI_OK != PAPI_query_event(PAPI_LST_INS)) fprintf(stderr, "Cannot count PAPI_LST_INS.\n");
+    if (PAPI_OK != PAPI_query_event(PAPI_FP_INS )) fprintf(stderr, "Cannot count PAPI_FP_INS.\n" );
+    if (PAPI_OK != PAPI_query_event(PAPI_L1_DCA )) fprintf(stderr, "Cannot count PAPI_L1_DCA.\n" );
+    if (PAPI_OK != PAPI_query_event(PAPI_L1_DCM )) fprintf(stderr, "Cannot count PAPI_L1_DCM.\n" );
+    if (PAPI_OK != PAPI_query_event(PAPI_L2_DCA )) fprintf(stderr, "Cannot count PAPI_L2_DCA.\n" );
+    if (PAPI_OK != PAPI_query_event(PAPI_L2_DCM )) fprintf(stderr, "Cannot count PAPI_L2_DCM.\n" );
+    if (PAPI_OK != PAPI_query_event(PAPI_TOT_CYC)) fprintf(stderr, "Cannot count PAPI_TOT_CYC.\n");
+    long long countersOne[3];
+    long long countersTwo[4];
+    long long countersThree[1];
 
-    check_valid(matrixC, matrixD, sizes[0]);
-    return 0;
+    Matrix matrixA, matrixB, matrixC, matrixD;
+
+    srand(time (NULL));
+    for (int size = 0; size < 12; size++) 
+    {
+        MATRIX_INITIALIZER (matrixA, sizes[size], sizes[size]);
+        MATRIX_INITIALIZER (matrixB, sizes[size], sizes[size]);
+        MATRIX_INITIALIZER (matrixC, sizes[size], sizes[size]);
+        MATRIX_INITIALIZER (matrixD, sizes[size], sizes[size]);
+
+        reset_matrices(matrixA, matrixB, matrixC, sizes[size]);
+
+        printf("\033[1;32mTiming data for winograd_strassen at size: %d\033[0m", sizes[size]);
+        if (PAPI_start_counters(PAPI_one, 3) != 0)
+        {
+            printf("AN ERROR HAS OCCURRED\n");
+            return -1;
+        }
+        w_strassen(matrixC, matrixA, matrixB, sizes[size]);
+        if (PAPI_stop_counters(countersOne, 3) != 0) 
+        {
+            printf("AN ERROR HAS OCCURRED\n");
+            return -1;
+        }
+        print_one_data(countersOne, sizes[size]);
+
+        reset_matrices(matrixA, matrixB, matrixC, sizes[size]);
+
+        if (PAPI_start_counters(PAPI_two, 4) != 0) 
+        {
+            printf("AN ERROR HAS OCCURRED\n");
+            return -1;
+        }
+        w_strassen(matrixC, matrixA, matrixB, sizes[size]);
+        if (PAPI_stop_counters(countersTwo, 4) != 0) 
+        {
+            printf("AN ERROR HAS OCCURRED\n");
+            return -1;
+        }
+        print_two_data(countersTwo, sizes[size]);
+
+        reset_matrices(matrixA, matrixB, matrixC, sizes[size]);
+
+        if (PAPI_start_counters(PAPI_three, 1) != 0) 
+        {
+            printf("AN ERROR HAS OCCURRED\n");
+            return -1;
+        }
+        w_strassen(matrixC, matrixA, matrixB, sizes[size]);
+        if (PAPI_stop_counters(countersThree, 1) != 0) 
+        {
+            printf("AN ERROR HAS OCCURRED\n");
+            return -1;
+        }
+        print_three_data(countersThree, sizes[size]);
+
+        matrixA.Delete(matrixA.values);
+        matrixB.Delete(matrixB.values);
+        matrixC.Delete(matrixC.values);
+    }
+
+    return -1;
+}
+
+void print_one_data (long long *counters, int size) 
+{
+    char names[3][20] = {"PAPI_TOT_INS", "PAPI_LST_INS", "PAPI_FP_INS"};
+    printf("\n%-20s %-10s\n", "Name", "Value");
+    printf("--------------------------------------------------\n");
+
+    for (int i = 0; i < 3; i++) {
+        printf("%-20s %-10lld\n", names[i], counters[i]);
+    }
+
+    printf("Now it is normalized data.\n");
+    printf("\n%-20s %-10s\n", "Name", "Value");
+    printf("--------------------------------------------------\n");
+
+    for (int i = 0; i < 3; i++) 
+    {
+        printf("%-20s %.4f\n", names[i], ((double) counters[i] / (double) (size * size * size)));
+    }
+}
+
+void print_two_data (long long *counters, int size) 
+{
+    printf("L1 Miss Rate is: %0.3f\n", ((float) counters[1] / (float) counters[0]));
+    printf("L2 Miss Rate is: %0.3f\n", ((float) counters[3] / (float) counters[2]));
+}
+
+void print_three_data(long long *counters, int size) 
+{
+    char *name = "PAPI_TOT_CYC";
+    printf("%-20s %-10lld\n\n", name, counters[0]);
 }
 
 Matrix w_strassen(Matrix dest, const Matrix srcA, const Matrix srcB, int length) 
@@ -205,6 +360,19 @@ void check_valid (Matrix a, Matrix b, int len) {
                 while b.values[%d][%d] is %.10f. \033[0m\n", i, j,  \
                 a.values[i][j], i, j, b.values[i][j]);
             }
+        }
+    }
+}
+
+void reset_matrices(Matrix a, Matrix b, Matrix c, int size) 
+{
+    for (int i = 0; i < size; i++) 
+    {
+        for (int j = 0; j < size; j++) 
+        {
+            a.values[i][j] = rand_from(1, 3);
+            b.values[i][j] = rand_from(1, 3);
+            c.values[i][j] = 0.0;
         }
     }
 }
