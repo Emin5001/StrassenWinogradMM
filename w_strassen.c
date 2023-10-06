@@ -60,7 +60,7 @@ void CLOCK_REALTIME_measurement ()
 
         printf("\033[1;32mTiming data for winograd_strassen at size: %d\033[0m ", sizes[size]);
 
-        if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start_time) == -1) 
+        if (clock_gettime(CLOCK_REALTIME, &start_time) == -1) 
         {
             printf("An error has occured\n");
             return;
@@ -68,14 +68,14 @@ void CLOCK_REALTIME_measurement ()
 
         w_strassen(matrixC, matrixA, matrixB, sizes[size]);
 
-        if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end_time) == -1) 
+        if (clock_gettime(CLOCK_REALTIME, &end_time) == -1) 
         {
             printf("An error has occured\n");
             return;
         }
         
         elapsed_ns = (end_time.tv_sec - start_time.tv_sec) * 1000000000LL + (end_time.tv_nsec - start_time.tv_nsec);
-        printf("CLOCK_THREAD_CPUTIME_ID Clock elapsed: %lld ns\n", elapsed_ns);
+        printf("CLOCK_REALTIME Clock elapsed: %lld ns\n", elapsed_ns);
         matrixA.Delete(matrixA.values);
         matrixB.Delete(matrixB.values);
         matrixC.Delete(matrixC.values);
@@ -83,89 +83,89 @@ void CLOCK_REALTIME_measurement ()
 
 }
 
-int PAPI_measurement () 
-{
-    if (PAPI_library_init(PAPI_VER_CURRENT) < 0) 
-    {
-        fprintf(stderr, "Error intializing PAPI!");
-        return -1;
-    }
+// int PAPI_measurement () 
+// {
+//     if (PAPI_library_init(PAPI_VER_CURRENT) < 0) 
+//     {
+//         fprintf(stderr, "Error intializing PAPI!");
+//         return -1;
+//     }
 
-    if (PAPI_OK != PAPI_query_event(PAPI_TOT_INS)) fprintf(stderr, "Cannot count PAPI_TOT_INS.\n");
-    if (PAPI_OK != PAPI_query_event(PAPI_LST_INS)) fprintf(stderr, "Cannot count PAPI_LST_INS.\n");
-    if (PAPI_OK != PAPI_query_event(PAPI_FP_INS )) fprintf(stderr, "Cannot count PAPI_FP_INS.\n" );
-    if (PAPI_OK != PAPI_query_event(PAPI_L1_DCA )) fprintf(stderr, "Cannot count PAPI_L1_DCA.\n" );
-    if (PAPI_OK != PAPI_query_event(PAPI_L1_DCM )) fprintf(stderr, "Cannot count PAPI_L1_DCM.\n" );
-    if (PAPI_OK != PAPI_query_event(PAPI_L2_DCA )) fprintf(stderr, "Cannot count PAPI_L2_DCA.\n" );
-    if (PAPI_OK != PAPI_query_event(PAPI_L2_DCM )) fprintf(stderr, "Cannot count PAPI_L2_DCM.\n" );
-    if (PAPI_OK != PAPI_query_event(PAPI_TOT_CYC)) fprintf(stderr, "Cannot count PAPI_TOT_CYC.\n");
-    long long countersOne[3];
-    long long countersTwo[4];
-    long long countersThree[1];
+//     if (PAPI_OK != PAPI_query_event(PAPI_TOT_INS)) fprintf(stderr, "Cannot count PAPI_TOT_INS.\n");
+//     if (PAPI_OK != PAPI_query_event(PAPI_LST_INS)) fprintf(stderr, "Cannot count PAPI_LST_INS.\n");
+//     if (PAPI_OK != PAPI_query_event(PAPI_FP_INS )) fprintf(stderr, "Cannot count PAPI_FP_INS.\n" );
+//     if (PAPI_OK != PAPI_query_event(PAPI_L1_DCA )) fprintf(stderr, "Cannot count PAPI_L1_DCA.\n" );
+//     if (PAPI_OK != PAPI_query_event(PAPI_L1_DCM )) fprintf(stderr, "Cannot count PAPI_L1_DCM.\n" );
+//     if (PAPI_OK != PAPI_query_event(PAPI_L2_DCA )) fprintf(stderr, "Cannot count PAPI_L2_DCA.\n" );
+//     if (PAPI_OK != PAPI_query_event(PAPI_L2_DCM )) fprintf(stderr, "Cannot count PAPI_L2_DCM.\n" );
+//     if (PAPI_OK != PAPI_query_event(PAPI_TOT_CYC)) fprintf(stderr, "Cannot count PAPI_TOT_CYC.\n");
+//     long long countersOne[3];
+//     long long countersTwo[4];
+//     long long countersThree[1];
 
-    Matrix matrixA, matrixB, matrixC, matrixD;
+//     Matrix matrixA, matrixB, matrixC, matrixD;
 
-    srand(time (NULL));
-    for (int size = 0; size < 12; size++) 
-    {
-        MATRIX_INITIALIZER (matrixA, sizes[size], sizes[size]);
-        MATRIX_INITIALIZER (matrixB, sizes[size], sizes[size]);
-        MATRIX_INITIALIZER (matrixC, sizes[size], sizes[size]);
-        MATRIX_INITIALIZER (matrixD, sizes[size], sizes[size]);
+//     srand(time (NULL));
+//     for (int size = 0; size < 12; size++) 
+//     {
+//         MATRIX_INITIALIZER (matrixA, sizes[size], sizes[size]);
+//         MATRIX_INITIALIZER (matrixB, sizes[size], sizes[size]);
+//         MATRIX_INITIALIZER (matrixC, sizes[size], sizes[size]);
+//         MATRIX_INITIALIZER (matrixD, sizes[size], sizes[size]);
 
-        reset_matrices(matrixA, matrixB, matrixC, sizes[size]);
+//         reset_matrices(matrixA, matrixB, matrixC, sizes[size]);
 
-        printf("\033[1;32mTiming data for winograd_strassen at size: %d\033[0m", sizes[size]);
-        if (PAPI_start_counters(PAPI_one, 3) != 0)
-        {
-            printf("AN ERROR HAS OCCURRED\n");
-            return -1;
-        }
-        w_strassen(matrixC, matrixA, matrixB, sizes[size]);
-        if (PAPI_stop_counters(countersOne, 3) != 0) 
-        {
-            printf("AN ERROR HAS OCCURRED\n");
-            return -1;
-        }
-        print_one_data(countersOne, sizes[size]);
+//         printf("\033[1;32mTiming data for winograd_strassen at size: %d\033[0m", sizes[size]);
+//         if (PAPI_start_counters(PAPI_one, 3) != 0)
+//         {
+//             printf("AN ERROR HAS OCCURRED\n");
+//             return -1;
+//         }
+//         w_strassen(matrixC, matrixA, matrixB, sizes[size]);
+//         if (PAPI_stop_counters(countersOne, 3) != 0) 
+//         {
+//             printf("AN ERROR HAS OCCURRED\n");
+//             return -1;
+//         }
+//         print_one_data(countersOne, sizes[size]);
 
-        reset_matrices(matrixA, matrixB, matrixC, sizes[size]);
+//         reset_matrices(matrixA, matrixB, matrixC, sizes[size]);
 
-        if (PAPI_start_counters(PAPI_two, 4) != 0) 
-        {
-            printf("AN ERROR HAS OCCURRED\n");
-            return -1;
-        }
-        w_strassen(matrixC, matrixA, matrixB, sizes[size]);
-        if (PAPI_stop_counters(countersTwo, 4) != 0) 
-        {
-            printf("AN ERROR HAS OCCURRED\n");
-            return -1;
-        }
-        print_two_data(countersTwo, sizes[size]);
+//         if (PAPI_start_counters(PAPI_two, 4) != 0) 
+//         {
+//             printf("AN ERROR HAS OCCURRED\n");
+//             return -1;
+//         }
+//         w_strassen(matrixC, matrixA, matrixB, sizes[size]);
+//         if (PAPI_stop_counters(countersTwo, 4) != 0) 
+//         {
+//             printf("AN ERROR HAS OCCURRED\n");
+//             return -1;
+//         }
+//         print_two_data(countersTwo, sizes[size]);
 
-        reset_matrices(matrixA, matrixB, matrixC, sizes[size]);
+//         reset_matrices(matrixA, matrixB, matrixC, sizes[size]);
 
-        if (PAPI_start_counters(PAPI_three, 1) != 0) 
-        {
-            printf("AN ERROR HAS OCCURRED\n");
-            return -1;
-        }
-        w_strassen(matrixC, matrixA, matrixB, sizes[size]);
-        if (PAPI_stop_counters(countersThree, 1) != 0) 
-        {
-            printf("AN ERROR HAS OCCURRED\n");
-            return -1;
-        }
-        print_three_data(countersThree, sizes[size]);
+//         if (PAPI_start_counters(PAPI_three, 1) != 0) 
+//         {
+//             printf("AN ERROR HAS OCCURRED\n");
+//             return -1;
+//         }
+//         w_strassen(matrixC, matrixA, matrixB, sizes[size]);
+//         if (PAPI_stop_counters(countersThree, 1) != 0) 
+//         {
+//             printf("AN ERROR HAS OCCURRED\n");
+//             return -1;
+//         }
+//         print_three_data(countersThree, sizes[size]);
 
-        matrixA.Delete(matrixA.values);
-        matrixB.Delete(matrixB.values);
-        matrixC.Delete(matrixC.values);
-    }
+//         matrixA.Delete(matrixA.values);
+//         matrixB.Delete(matrixB.values);
+//         matrixC.Delete(matrixC.values);
+//     }
 
-    return -1;
-}
+//     return -1;
+// }
 
 void print_one_data (long long *counters, int size) 
 {
