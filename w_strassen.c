@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <papi.h>
+// #include <papi.h>
 #include "matrix.h" 
 
 int PAPI_measurement ();
@@ -18,22 +18,22 @@ void print_three_data (long long *, int);
 
 uint32_t sizes[12] = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
 
-int PAPI_one[3] = 
-{
-    PAPI_TOT_INS,
-    PAPI_LST_INS,
-    PAPI_FP_INS,
-};
+// int PAPI_one[3] = 
+// {
+//     PAPI_TOT_INS,
+//     PAPI_LST_INS,
+//     PAPI_FP_INS,
+// };
 
-int PAPI_two[4] = 
-{
-    PAPI_L1_DCA,
-    PAPI_L1_DCM,
-    PAPI_L2_DCA,
-    PAPI_L2_DCM,
-};
+// int PAPI_two[4] = 
+// {
+//     PAPI_L1_DCA,
+//     PAPI_L1_DCM,
+//     PAPI_L2_DCA,
+//     PAPI_L2_DCM,
+// };
 
-int PAPI_three[1] = { PAPI_TOT_CYC };
+// int PAPI_three[1] = { PAPI_TOT_CYC };
 
 int main () 
 {
@@ -44,61 +44,38 @@ int main ()
 
 void CLOCK_REALTIME_measurement ()
 {
+    int size = 8;
     Matrix matrixA, matrixB, matrixC, matrixD;
 
     srand(time (NULL));
-    for (int size = 0; size < 12; size++) 
-    {
-        MATRIX_INITIALIZER (matrixA, sizes[size], sizes[size]);
-        MATRIX_INITIALIZER (matrixB, sizes[size], sizes[size]);
-        MATRIX_INITIALIZER (matrixC, sizes[size], sizes[size]);
-        MATRIX_INITIALIZER (matrixD, sizes[size], sizes[size]);
+    MATRIX_INITIALIZER (matrixA, size, size);
+    MATRIX_INITIALIZER (matrixB, size, size);
+    MATRIX_INITIALIZER (matrixC, size, size);
+    MATRIX_INITIALIZER (matrixD, size, size);
 
-        reset_matrices(matrixA, matrixB, matrixC, sizes[size]);
-        struct timespec start_time, end_time;
-        long long elapsed_ns;
-
-        printf("\033[1;32mTiming data for winograd_strassen at size: %d\033[0m ", sizes[size]);
-
-        if (clock_gettime(CLOCK_REALTIME, &start_time) == -1) 
-        {
-            printf("An error has occured\n");
-            return;
-        }
-
-        w_strassen(matrixC, matrixA, matrixB, sizes[size]);
-
-        if (clock_gettime(CLOCK_REALTIME, &end_time) == -1) 
-        {
-            printf("An error has occured\n");
-            return;
-        }
-        
-        elapsed_ns = (end_time.tv_sec - start_time.tv_sec) * 1000000000LL + (end_time.tv_nsec - start_time.tv_nsec);
-        printf("CLOCK_REALTIME Clock elapsed: %lld ns\n", elapsed_ns);
-        matrixA.Delete(matrixA.values);
-        matrixB.Delete(matrixB.values);
-        matrixC.Delete(matrixC.values);
-    }
-
+    reset_matrices(matrixA, matrixB, matrixC, size);
+    w_strassen(matrixC, matrixA, matrixB, size);
+    print_matrix(matrixC, "Matrix C");
+    naive (matrixD, matrixA, matrixB, size);
+    print_matrix(matrixD, "Matrix D");
 }
 
 // int PAPI_measurement () 
 // {
-//     if (PAPI_library_init(PAPI_VER_CURRENT) < 0) 
-//     {
-//         fprintf(stderr, "Error intializing PAPI!");
-//         return -1;
-//     }
+//     // if (PAPI_library_init(PAPI_VER_CURRENT) < 0) 
+//     // {
+//     //     fprintf(stderr, "Error intializing PAPI!");
+//     //     return -1;
+//     // }
 
-//     if (PAPI_OK != PAPI_query_event(PAPI_TOT_INS)) fprintf(stderr, "Cannot count PAPI_TOT_INS.\n");
-//     if (PAPI_OK != PAPI_query_event(PAPI_LST_INS)) fprintf(stderr, "Cannot count PAPI_LST_INS.\n");
-//     if (PAPI_OK != PAPI_query_event(PAPI_FP_INS )) fprintf(stderr, "Cannot count PAPI_FP_INS.\n" );
-//     if (PAPI_OK != PAPI_query_event(PAPI_L1_DCA )) fprintf(stderr, "Cannot count PAPI_L1_DCA.\n" );
-//     if (PAPI_OK != PAPI_query_event(PAPI_L1_DCM )) fprintf(stderr, "Cannot count PAPI_L1_DCM.\n" );
-//     if (PAPI_OK != PAPI_query_event(PAPI_L2_DCA )) fprintf(stderr, "Cannot count PAPI_L2_DCA.\n" );
-//     if (PAPI_OK != PAPI_query_event(PAPI_L2_DCM )) fprintf(stderr, "Cannot count PAPI_L2_DCM.\n" );
-//     if (PAPI_OK != PAPI_query_event(PAPI_TOT_CYC)) fprintf(stderr, "Cannot count PAPI_TOT_CYC.\n");
+//     // if (PAPI_OK != PAPI_query_event(PAPI_TOT_INS)) fprintf(stderr, "Cannot count PAPI_TOT_INS.\n");
+//     // if (PAPI_OK != PAPI_query_event(PAPI_LST_INS)) fprintf(stderr, "Cannot count PAPI_LST_INS.\n");
+//     // if (PAPI_OK != PAPI_query_event(PAPI_FP_INS )) fprintf(stderr, "Cannot count PAPI_FP_INS.\n" );
+//     // if (PAPI_OK != PAPI_query_event(PAPI_L1_DCA )) fprintf(stderr, "Cannot count PAPI_L1_DCA.\n" );
+//     // if (PAPI_OK != PAPI_query_event(PAPI_L1_DCM )) fprintf(stderr, "Cannot count PAPI_L1_DCM.\n" );
+//     // if (PAPI_OK != PAPI_query_event(PAPI_L2_DCA )) fprintf(stderr, "Cannot count PAPI_L2_DCA.\n" );
+//     // if (PAPI_OK != PAPI_query_event(PAPI_L2_DCM )) fprintf(stderr, "Cannot count PAPI_L2_DCM.\n" );
+//     // if (PAPI_OK != PAPI_query_event(PAPI_TOT_CYC)) fprintf(stderr, "Cannot count PAPI_TOT_CYC.\n");
 //     long long countersOne[3];
 //     long long countersTwo[4];
 //     long long countersThree[1];
@@ -370,8 +347,8 @@ void reset_matrices(Matrix a, Matrix b, Matrix c, int size)
     {
         for (int j = 0; j < size; j++) 
         {
-            a.values[i][j] = rand_from(1, 3);
-            b.values[i][j] = rand_from(1, 3);
+            a.values[i][j] = i;
+            b.values[i][j] = j;
             c.values[i][j] = 0.0;
         }
     }
