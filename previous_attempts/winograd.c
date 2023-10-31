@@ -466,7 +466,6 @@ void strassen(int size, double **A, double **B, double **C, double **a11,
 {
     if (size == 2)
     {
-        printf("The address of the resulting array in the if statement is %p\n", (void *) C);
         C[0][0] = (A[0][0] * B[0][0]) + (A[0][1] * B[1][0]);
         C[0][1] = (A[0][0] * B[0][1]) + (A[0][1] * B[1][1]);
         C[1][0] = (A[1][0] * B[0][0]) + (A[1][1] * B[1][0]);
@@ -493,57 +492,16 @@ void strassen(int size, double **A, double **B, double **C, double **a11,
                 b22[i][j] = B[i + half][j + half];
             }
         }
-        printf("a11 is: \n");
-        print_matrix(a11, half);
-        
-        printf("a12 is: \n");
-        print_matrix(a12, half);
-        
-        printf("a21 is: \n");
-        print_matrix(a21, half);
-        
-        printf("a22 is: \n");
-        print_matrix(a22, half);
-
-        printf("b11 is: \n");
-        print_matrix(b11, half);
-        
-        printf("b12 is: \n");
-        print_matrix(b12, half);
-        
-        printf("b21 is: \n");
-        print_matrix(b21, half);
-        
-        printf("b22 is: \n");
-        print_matrix(b22, half);
-        
         // calculate s1 --> s4 and t1 --> t4
         matrix_add      (s1, a21, a22, half);
         matrix_subtract (s2, s1, a11, half);
         matrix_subtract (s3, a11, a21, half);
         matrix_subtract (s4, a12, s2, half);
-        printf("\nS1 is: \n");
-        print_matrix(s1, half);
-        printf("S2 is: \n");
-        print_matrix(s2, half);
-        printf("S3 is: \n");
-        print_matrix(s3, half);
-        printf("S4 is: \n");
-        print_matrix(s4, half);
 
         matrix_subtract (t1, b12, b11, half);
         matrix_subtract (t2, b22, t1, half);
         matrix_subtract (t3, b22, b12, half);
         matrix_subtract (t4, b21, t2, half);
-        
-        printf("\nT1 is: \n");
-        print_matrix(t1, half);
-        printf("T2 is: \n");
-        print_matrix(t2, half);
-        printf("T3 is: \n");
-        print_matrix(t3, half);
-        printf("T4 is: \n");
-        print_matrix(t4, half);
 
         strassen(half, a11, b11,  p1, a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7); // p1 = a11 * b11
         strassen(half, a12, b21,  p2, a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7); // p2 = a12 * b21
@@ -552,21 +510,6 @@ void strassen(int size, double **A, double **B, double **C, double **a11,
         strassen(half, s3,  t3,  p5, a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7); // p5 = s3  * t3
         strassen(half, s4,  b22, p6, a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7); // p6 = s4  * b22
         strassen(half, a22,  t4,  p7, a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7); // p7 = a22 * t4
-        
-        printf("\np1 is: \n");
-        print_matrix (p1, half);
-        printf("\np2 is: \n");
-        print_matrix (p2, half);
-        printf("\np3 is: \n");
-        print_matrix (p3, half);
-        printf("\np4 is: \n");
-        print_matrix (p4, half);
-        printf("\np5 is: \n");
-        print_matrix (p5, half);
-        printf("\np6 is: \n");
-        print_matrix (p6, half);
-        printf("\np7 is: \n");
-        print_matrix (p7, half);
 
         // calculate u1 --> u7 & set C11 --> C22
         for (int i = 0; i < half; i++) 
@@ -582,8 +525,6 @@ void strassen(int size, double **A, double **B, double **C, double **a11,
                 C[i][j + half] = u6[i][j] + p6[i][j];           // C12 = U7 = U6 + P6
             }
         }
-        printf("Now, C is:\n");
-        print_matrix (C, size);
     }
 }
 
