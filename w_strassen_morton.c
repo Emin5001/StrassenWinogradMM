@@ -16,14 +16,13 @@ unsigned int S               (unsigned int, unsigned int);
 void         convertToMorton (double *, double *, int);
 void         print_matrix    (double *, uint32_t);
 double       rand_from       (double, double);
-int          Lr              (int, int, int);  
+int          L_r             (int, int, int);  
 void         print_bits      (unsigned int);
 int          layout          (int, int);
 
 const unsigned int E[] = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF};
 const unsigned int F[] = {1, 2, 4, 8};
-const unsigned int TR = 2;
-const unsigned int TC = 2;
+const unsigned int TR = 2, TC = 2;
 
 int main()
 {
@@ -185,16 +184,15 @@ void strassen (int size, double *A, double *B, double *C, double *a11,
 int layout (int i, int j)
 {
     // i == row, j == col. 
-
     // ti = T (i, tr) = i / tr
     // tj = T (j, tc) = j / tc
     // fi = F (i, tr) = i % tr
     // fj = F (j, tc) = j % tc
     // TR * TC * S (ti, tj) + Lr (fi, fj, tr, tc)
-    return TR * TC * S (i / TR, j / TC) + Lr (i % TR, j % TC, TC);
+    return TR * TC * S (i / TR, j / TC) + L_r (i % TR, j % TC, TC);
 }
 
-int Lr (int i, int j, int n)
+int L_r (int i, int j, int n)
 {
     return n * i + j;
 }
@@ -207,7 +205,7 @@ void convertToMorton(double *matrix, double *morton, int size)
         {
             int res = layout (row, col);
             printf("for (%d, %d), morton is %d\n", row, col, res);
-            morton[layout (row, col)] = matrix[row * size + col];
+            morton[res] = matrix[row * size + col];
         }
     }
 }
@@ -216,7 +214,6 @@ void convertToMorton(double *matrix, double *morton, int size)
 unsigned int S (unsigned int x, unsigned int y)
 {
     unsigned int z = 0;
-
     x = (x | (x << F[3])) & E[3];
     x = (x | (x << F[2])) & E[2];
     x = (x | (x << F[1])) & E[1];
@@ -227,8 +224,7 @@ unsigned int S (unsigned int x, unsigned int y)
     y = (y | (y << F[1])) & E[1];
     y = (y | (y << F[0])) & E[0];
 
-    z = x | (y << 1);
-
+    z = y | (x << 1);
     return z;
 }
 
