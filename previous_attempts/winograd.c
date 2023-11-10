@@ -46,57 +46,57 @@ int main()
     int half = SIZE / 2;
 
     // malloc all of the components we will need for strassen-winograd
-    double **A  = malloc (SIZE * sizeof(double *));
-    double **B  = malloc (SIZE * sizeof(double *));
-    double **C  = malloc (SIZE * sizeof(double *));
-    double **D  = malloc (SIZE * sizeof(double *)); // used for checking validity.
+    double **A  = (double **) malloc (SIZE * sizeof(double *));
+    double **B  = (double **) malloc (SIZE * sizeof(double *));
+    double **C  = (double **) malloc (SIZE * sizeof(double *));
+    double **D  = (double **) malloc (SIZE * sizeof(double *)); // used for checking validity.
 
-    double **p1 = malloc (half * sizeof(double *));
-    double **p2 = malloc (half * sizeof(double *));
-    double **p3 = malloc (half * sizeof(double *));
-    double **p4 = malloc (half * sizeof(double *));
-    double **p5 = malloc (half * sizeof(double *));
-    double **p6 = malloc (half * sizeof(double *));
-    double **p7 = malloc (half * sizeof(double *));
+    double **p1 = (double **) malloc (half * sizeof(double *));
+    double **p2 = (double **) malloc (half * sizeof(double *));
+    double **p3 = (double **) malloc (half * sizeof(double *));
+    double **p4 = (double **) malloc (half * sizeof(double *));
+    double **p5 = (double **) malloc (half * sizeof(double *));
+    double **p6 = (double **) malloc (half * sizeof(double *));
+    double **p7 = (double **) malloc (half * sizeof(double *));
 
-    double **u1 = malloc (half * sizeof(double *));
-    double **u2 = malloc (half * sizeof(double *));
-    double **u3 = malloc (half * sizeof(double *));
-    double **u4 = malloc (half * sizeof(double *));
-    double **u5 = malloc (half * sizeof(double *));
-    double **u6 = malloc (half * sizeof(double *));
-    double **u7 = malloc (half * sizeof(double *));
+    double **u1 = (double **) malloc (half * sizeof(double *));
+    double **u2 = (double **) malloc (half * sizeof(double *));
+    double **u3 = (double **) malloc (half * sizeof(double *));
+    double **u4 = (double **) malloc (half * sizeof(double *));
+    double **u5 = (double **) malloc (half * sizeof(double *));
+    double **u6 = (double **) malloc (half * sizeof(double *));
+    double **u7 = (double **) malloc (half * sizeof(double *));
 
-    double **s1 = malloc (half * sizeof(double *));
-    double **s2 = malloc (half * sizeof(double *));
-    double **s3 = malloc (half * sizeof(double *));
-    double **s4 = malloc (half * sizeof(double *));
+    double **s1 = (double **) malloc (half * sizeof(double *));
+    double **s2 = (double **) malloc (half * sizeof(double *));
+    double **s3 = (double **) malloc (half * sizeof(double *));
+    double **s4 = (double **) malloc (half * sizeof(double *));
 
-    double **t1 = malloc (half * sizeof(double *));
-    double **t2 = malloc (half * sizeof(double *));
-    double **t3 = malloc (half * sizeof(double *));
-    double **t4 = malloc (half * sizeof(double *));
+    double **t1 = (double **) malloc (half * sizeof(double *));
+    double **t2 = (double **) malloc (half * sizeof(double *));
+    double **t3 = (double **) malloc (half * sizeof(double *));
+    double **t4 = (double **) malloc (half * sizeof(double *));
 
-    double **a11 = malloc (half * sizeof(double *));
-    double **a12 = malloc (half * sizeof(double *));
-    double **a21 = malloc (half * sizeof(double *));
-    double **a22 = malloc (half * sizeof(double *));
+    double **a11 = (double **) malloc (half * sizeof(double *));
+    double **a12 = (double **) malloc (half * sizeof(double *));
+    double **a21 = (double **) malloc (half * sizeof(double *));
+    double **a22 = (double **) malloc (half * sizeof(double *));
 
-    double **b11 = malloc (half * sizeof(double *));
-    double **b12 = malloc (half * sizeof(double *));
-    double **b21 = malloc (half * sizeof(double *));
-    double **b22 = malloc (half * sizeof(double *));
+    double **b11 = (double **) malloc (half * sizeof(double *));
+    double **b12 = (double **) malloc (half * sizeof(double *));
+    double **b21 = (double **) malloc (half * sizeof(double *));
+    double **b22 = (double **) malloc (half * sizeof(double *));
 
     for (int i = 0; i < SIZE; i++)
     {
-        A[i]  = malloc(SIZE * sizeof(double));
-        B[i]  = malloc(SIZE * sizeof(double));
-        C[i]  = malloc(SIZE * sizeof(double));
-        D[i]  = malloc(SIZE * sizeof(double));
+        A[i]  = (double *) malloc(SIZE * sizeof(double));
+        B[i]  = (double *) malloc(SIZE * sizeof(double));
+        C[i]  = (double *) malloc(SIZE * sizeof(double));
+        D[i]  = (double *) malloc(SIZE * sizeof(double));
         for (int j = 0; j < SIZE; j++)
         {
-            A[i][j] = i;
-            B[i][j] = j;
+            A[i][j] = i + j;
+            B[i][j] = i + j;
             C[i][j] = 0;
             D[i][j] = 0;
         }
@@ -104,41 +104,41 @@ int main()
 
     for (int i = 0; i < half; i++)
     {
-        p1[i] = malloc(half * sizeof(double));
-        p2[i] = malloc(half * sizeof(double));
-        p3[i] = malloc(half * sizeof(double));
-        p4[i] = malloc(half * sizeof(double));
-        p5[i] = malloc(half * sizeof(double));
-        p6[i] = malloc(half * sizeof(double));
-        p7[i] = malloc(half * sizeof(double));
+        p1[i] = (double *) malloc(half * sizeof(double));
+        p2[i] = (double *) malloc(half * sizeof(double));
+        p3[i] = (double *) malloc(half * sizeof(double));
+        p4[i] = (double *) malloc(half * sizeof(double));
+        p5[i] = (double *) malloc(half * sizeof(double));
+        p6[i] = (double *) malloc(half * sizeof(double));
+        p7[i] = (double *) malloc(half * sizeof(double));
 
-        u1[i] = malloc(half * sizeof(double));
-        u2[i] = malloc(half * sizeof(double));
-        u3[i] = malloc(half * sizeof(double));
-        u4[i] = malloc(half * sizeof(double));
-        u5[i] = malloc(half * sizeof(double));
-        u6[i] = malloc(half * sizeof(double));
-        u7[i] = malloc(half * sizeof(double));
+        u1[i] = (double *) malloc(half * sizeof(double));
+        u2[i] = (double *) malloc(half * sizeof(double));
+        u3[i] = (double *) malloc(half * sizeof(double));
+        u4[i] = (double *) malloc(half * sizeof(double));
+        u5[i] = (double *) malloc(half * sizeof(double));
+        u6[i] = (double *) malloc(half * sizeof(double));
+        u7[i] = (double *) malloc(half * sizeof(double));
 
-        s1[i] = malloc(half * sizeof(double));
-        s2[i] = malloc(half * sizeof(double));
-        s3[i] = malloc(half * sizeof(double));
-        s4[i] = malloc(half * sizeof(double));
+        s1[i] = (double *) malloc(half * sizeof(double));
+        s2[i] = (double *) malloc(half * sizeof(double));
+        s3[i] = (double *) malloc(half * sizeof(double));
+        s4[i] = (double *) malloc(half * sizeof(double));
 
-        t1[i] = malloc(half * sizeof(double));
-        t2[i] = malloc(half * sizeof(double));
-        t3[i] = malloc(half * sizeof(double));
-        t4[i] = malloc(half * sizeof(double));
+        t1[i] = (double *) malloc(half * sizeof(double));
+        t2[i] = (double *) malloc(half * sizeof(double));
+        t3[i] = (double *) malloc(half * sizeof(double));
+        t4[i] = (double *) malloc(half * sizeof(double));
 
-        a11[i] = malloc(half * sizeof(double));
-        a12[i] = malloc(half * sizeof(double));
-        a21[i] = malloc(half * sizeof(double));
-        a22[i] = malloc(half * sizeof(double));
+        a11[i] = (double *) malloc(half * sizeof(double));
+        a12[i] = (double *) malloc(half * sizeof(double));
+        a21[i] = (double *) malloc(half * sizeof(double));
+        a22[i] = (double *) malloc(half * sizeof(double));
 
-        b11[i] = malloc(half * sizeof(double));
-        b12[i] = malloc(half * sizeof(double));
-        b21[i] = malloc(half * sizeof(double));
-        b22[i] = malloc(half * sizeof(double));
+        b11[i] = (double *) malloc(half * sizeof(double));
+        b12[i] = (double *) malloc(half * sizeof(double));
+        b21[i] = (double *) malloc(half * sizeof(double));
+        b22[i] = (double *) malloc(half * sizeof(double));
     }
 
     // init all components that we will need to 0
@@ -189,7 +189,8 @@ int main()
     printf("B is: \n");
     print_matrix (B, SIZE);
     // call strassen
-    strassen(SIZE, A, B, C, a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
+    // strassen(SIZE, A, B, C, a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
+    strassen_temp(A, B, C, SIZE);
     // call naive; will use to compare.
     naive(A, B, D, SIZE);
     
@@ -261,97 +262,108 @@ void strassen_temp(double **A, double **B, double **C, int size)
 {
     if (size == 2)
     {
-        C[0][0] = (A[0][0] * B[0][0]) + (A[0][1] * B[1][0]);
-        C[0][1] = (A[0][0] * B[0][1]) + (A[0][1] * B[1][1]);
-        C[1][0] = (A[1][0] * B[0][0]) + (A[1][1] * B[1][0]);
-        C[1][1] = (A[1][0] * B[0][1]) + (A[1][1] * B[1][1]);
+        printf("multiplying: \n");
+        print_matrix(A, size);
+        printf("by\n");
+        print_matrix(B, size);
+        naive(A, B, C, size);
+        printf("result is \n");
+        print_matrix(C, size);
+        // C[0][0] = (A[0][0] * B[0][0]) + (A[0][1] * B[1][0]);
+        // C[0][1] = (A[0][0] * B[0][1]) + (A[0][1] * B[1][1]);
+        // C[1][0] = (A[1][0] * B[0][0]) + (A[1][1] * B[1][0]);
+        // C[1][1] = (A[1][0] * B[0][1]) + (A[1][1] * B[1][1]);
     } else
     {
+        printf("__A is __\n");
+        print_matrix(A, size);
+        printf("__B is __\n");
+        print_matrix(B, size);
         int half = size / 2;
 
-        double **a11 = malloc (half * sizeof(double *));
-        double **a12 = malloc (half * sizeof(double *));
-        double **a21 = malloc (half * sizeof(double *));
-        double **a22 = malloc (half * sizeof(double *));
+        double **a11 = (double **) malloc (half * sizeof(double *));
+        double **a12 = (double **) malloc (half * sizeof(double *));
+        double **a21 = (double **) malloc (half * sizeof(double *));
+        double **a22 = (double **) malloc (half * sizeof(double *));
 
-        double **b11 = malloc (half * sizeof(double *));
-        double **b12 = malloc (half * sizeof(double *));
-        double **b21 = malloc (half * sizeof(double *));
-        double **b22 = malloc (half * sizeof(double *));
+        double **b11 = (double **) malloc (half * sizeof(double *));
+        double **b12 = (double **) malloc (half * sizeof(double *));
+        double **b21 = (double **) malloc (half * sizeof(double *));
+        double **b22 = (double **) malloc (half * sizeof(double *));
 
-        double **c11 = malloc (half * sizeof(double *));
-        double **c12 = malloc (half * sizeof(double *));
-        double **c21 = malloc (half * sizeof(double *));
-        double **c22 = malloc (half * sizeof(double *));
+        double **c11 = (double **) malloc (half * sizeof(double *));
+        double **c12 = (double **) malloc (half * sizeof(double *));
+        double **c21 = (double **) malloc (half * sizeof(double *));
+        double **c22 = (double **) malloc (half * sizeof(double *));
 
-        double **s1 = malloc (half * sizeof(double *));
-        double **s2 = malloc (half * sizeof(double *));
-        double **s3 = malloc (half * sizeof(double *));
-        double **s4 = malloc (half * sizeof(double *));
+        double **s1 = (double **) malloc (half * sizeof(double *));
+        double **s2 = (double **) malloc (half * sizeof(double *));
+        double **s3 = (double **) malloc (half * sizeof(double *));
+        double **s4 = (double **) malloc (half * sizeof(double *));
 
-        double **t1 = malloc (half * sizeof(double *));
-        double **t2 = malloc (half * sizeof(double *));
-        double **t3 = malloc (half * sizeof(double *));
-        double **t4 = malloc (half * sizeof(double *));
+        double **t1 = (double **) malloc (half * sizeof(double *));
+        double **t2 = (double **) malloc (half * sizeof(double *));
+        double **t3 = (double **) malloc (half * sizeof(double *));
+        double **t4 = (double **) malloc (half * sizeof(double *));
 
-        double **p1 = malloc (half * sizeof(double *));
-        double **p2 = malloc (half * sizeof(double *));
-        double **p3 = malloc (half * sizeof(double *));
-        double **p4 = malloc (half * sizeof(double *));
-        double **p5 = malloc (half * sizeof(double *));
-        double **p6 = malloc (half * sizeof(double *));
-        double **p7 = malloc (half * sizeof(double *));
+        double **p1 = (double **) malloc (half * sizeof(double *));
+        double **p2 = (double **) malloc (half * sizeof(double *));
+        double **p3 = (double **) malloc (half * sizeof(double *));
+        double **p4 = (double **) malloc (half * sizeof(double *));
+        double **p5 = (double **) malloc (half * sizeof(double *));
+        double **p6 = (double **) malloc (half * sizeof(double *));
+        double **p7 = (double **) malloc (half * sizeof(double *));
 
-        double **u1 = malloc (half * sizeof(double *));
-        double **u2 = malloc (half * sizeof(double *));
-        double **u3 = malloc (half * sizeof(double *));
-        double **u4 = malloc (half * sizeof(double *));
-        double **u5 = malloc (half * sizeof(double *));
-        double **u6 = malloc (half * sizeof(double *));
-        double **u7 = malloc (half * sizeof(double *));
+        double **u1 = (double **) malloc (half * sizeof(double *));
+        double **u2 = (double **) malloc (half * sizeof(double *));
+        double **u3 = (double **) malloc (half * sizeof(double *));
+        double **u4 = (double **) malloc (half * sizeof(double *));
+        double **u5 = (double **) malloc (half * sizeof(double *));
+        double **u6 = (double **) malloc (half * sizeof(double *));
+        double **u7 = (double **) malloc (half * sizeof(double *));
 
         for (int i = 0; i < half; i++)
         {
-            p1[i] = malloc(half * sizeof(double));
-            p2[i] = malloc(half * sizeof(double));
-            p3[i] = malloc(half * sizeof(double));
-            p4[i] = malloc(half * sizeof(double));
-            p5[i] = malloc(half * sizeof(double));
-            p6[i] = malloc(half * sizeof(double));
-            p7[i] = malloc(half * sizeof(double));
+            p1[i] = (double *) malloc(half * sizeof(double));
+            p2[i] = (double *) malloc(half * sizeof(double));
+            p3[i] = (double *) malloc(half * sizeof(double));
+            p4[i] = (double *) malloc(half * sizeof(double));
+            p5[i] = (double *) malloc(half * sizeof(double));
+            p6[i] = (double *) malloc(half * sizeof(double));
+            p7[i] = (double *) malloc(half * sizeof(double));
 
-            u1[i] = malloc(half * sizeof(double));
-            u2[i] = malloc(half * sizeof(double));
-            u3[i] = malloc(half * sizeof(double));
-            u4[i] = malloc(half * sizeof(double));
-            u5[i] = malloc(half * sizeof(double));
-            u6[i] = malloc(half * sizeof(double));
-            u7[i] = malloc(half * sizeof(double));
+            u1[i] = (double *) malloc(half * sizeof(double));
+            u2[i] = (double *) malloc(half * sizeof(double));
+            u3[i] = (double *) malloc(half * sizeof(double));
+            u4[i] = (double *) malloc(half * sizeof(double));
+            u5[i] = (double *) malloc(half * sizeof(double));
+            u6[i] = (double *) malloc(half * sizeof(double));
+            u7[i] = (double *) malloc(half * sizeof(double));
 
-            s1[i] = malloc(half * sizeof(double));
-            s2[i] = malloc(half * sizeof(double));
-            s3[i] = malloc(half * sizeof(double));
-            s4[i] = malloc(half * sizeof(double));
+            s1[i] = (double *) malloc(half * sizeof(double));
+            s2[i] = (double *) malloc(half * sizeof(double));
+            s3[i] = (double *) malloc(half * sizeof(double));
+            s4[i] = (double *) malloc(half * sizeof(double));
 
-            t1[i] = malloc(half * sizeof(double));
-            t2[i] = malloc(half * sizeof(double));
-            t3[i] = malloc(half * sizeof(double));
-            t4[i] = malloc(half * sizeof(double));
+            t1[i] = (double *) malloc(half * sizeof(double));
+            t2[i] = (double *) malloc(half * sizeof(double));
+            t3[i] = (double *) malloc(half * sizeof(double));
+            t4[i] = (double *) malloc(half * sizeof(double));
 
-            a11[i] = malloc(half * sizeof(double));
-            a12[i] = malloc(half * sizeof(double));
-            a21[i] = malloc(half * sizeof(double));
-            a22[i] = malloc(half * sizeof(double));
+            a11[i] = (double *) malloc(half * sizeof(double));
+            a12[i] = (double *) malloc(half * sizeof(double));
+            a21[i] = (double *) malloc(half * sizeof(double));
+            a22[i] = (double *) malloc(half * sizeof(double));
 
-            b11[i] = malloc(half * sizeof(double));
-            b12[i] = malloc(half * sizeof(double));
-            b21[i] = malloc(half * sizeof(double));
-            b22[i] = malloc(half * sizeof(double));
+            b11[i] = (double *) malloc(half * sizeof(double));
+            b12[i] = (double *) malloc(half * sizeof(double));
+            b21[i] = (double *) malloc(half * sizeof(double));
+            b22[i] = (double *) malloc(half * sizeof(double));
 
-            c11[i] = malloc(half * sizeof(double));
-            c12[i] = malloc(half * sizeof(double));
-            c21[i] = malloc(half * sizeof(double));
-            c22[i] = malloc(half * sizeof(double));
+            c11[i] = (double *) malloc(half * sizeof(double));
+            c12[i] = (double *) malloc(half * sizeof(double));
+            c21[i] = (double *) malloc(half * sizeof(double));
+            c22[i] = (double *) malloc(half * sizeof(double));
 
             for (int j = 0; j < half; j++)
             {  
@@ -388,6 +400,29 @@ void strassen_temp(double **A, double **B, double **C, int size)
 
             }
         }
+        printf("**a11** is \n");
+        print_matrix(a11, half);
+
+        printf("**a12** is \n");
+        print_matrix(a12, half);
+
+        printf("**a21** is \n");
+        print_matrix(a21, half);
+
+        printf("**a22** is \n");
+        print_matrix(a22, half);
+
+        printf("**b11** is \n");
+        print_matrix(b11, half);
+
+        printf("**b12** is \n");
+        print_matrix(b12, half);
+
+        printf("**b21** is \n");
+        print_matrix(b21, half);
+
+        printf("**b22** is \n");
+        print_matrix(b22, half);
 
         matrix_add (s1, a21, a22, half);
         matrix_subtract (s2, s1, a11, half);
@@ -399,6 +434,31 @@ void strassen_temp(double **A, double **B, double **C, int size)
         matrix_subtract (t3, b22, b12, half);
         matrix_subtract (t4, b21, t2, half);
 
+        printf("**s1** is \n");
+        print_matrix(s1, half);
+
+        printf("**s2** is \n");
+        print_matrix(s2, half);
+
+        printf("**s3** is \n");
+        print_matrix(s3, half);
+
+        printf("**s4** is \n");
+        print_matrix(s4, half);
+
+        printf("**t1** is \n");
+        print_matrix(t1, half);
+
+        printf("**t2** is \n");
+        print_matrix(t2, half);
+
+        printf("**t3** is \n");
+        print_matrix(t3, half);
+
+        printf("**t4** is \n");
+        print_matrix(t4, half);
+
+
         strassen_temp (a11, b11, p1, half);
         strassen_temp (a12, b21, p2, half);
         strassen_temp (s1,  t1,   p3, half);
@@ -406,6 +466,26 @@ void strassen_temp(double **A, double **B, double **C, int size)
         strassen_temp (s3,  t3,  p5, half);
         strassen_temp (s4,  b22, p6, half);
         strassen_temp (a22, t4,  p7, half);
+        
+        printf("**p1** is \n");
+        print_matrix(p1, half);
+        printf("**p2** is \n");
+        print_matrix(p2, half);
+
+        printf("**p3** is \n");
+        print_matrix(p3, half);
+
+        printf("**p4** is \n");
+        print_matrix(p4, half);
+
+        printf("**p5** is \n");
+        print_matrix(p5, half);
+
+        printf("**p6** is \n");
+        print_matrix(p6, half);
+
+        printf("**p7** is \n");
+        print_matrix(p7, half);
 
         matrix_add (u1, p1, p2, half);
         matrix_add (u2, p1, p4, half);
@@ -430,6 +510,9 @@ void strassen_temp(double **A, double **B, double **C, int size)
                 C[i + half][j + half] = c22[i][j];
             }
         }
+
+        printf("at the end, C is \n");
+        print_matrix(C, size);
     }   
 }
 
@@ -572,7 +655,7 @@ void print_matrix (double **matrix, int size)
     {
         for (int j = 0; j < size; j++)
         {
-            printf("%.4f ", matrix[i][j]);
+            printf("%.1f ", matrix[i][j]);
         }
         printf("\n");
     }

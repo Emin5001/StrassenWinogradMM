@@ -31,7 +31,7 @@ uint32_t sizes[12] = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
 //     PAPI_L1_DCM,
 //     PAPI_L2_DCA,
 //     PAPI_L2_DCM,
-// };
+// }
 
 // int PAPI_three[1] = { PAPI_TOT_CYC };
 
@@ -249,7 +249,11 @@ Matrix w_strassen(Matrix dest, const Matrix srcA, const Matrix srcB, int length)
             b22.values[i][j] = srcB.values[i + len][j + len];
         }
     }
-
+    print_matrix(srcA, "A");
+    print_matrix(a11, "a11");
+    print_matrix(a12, "a12");
+    print_matrix(a21, "a21");
+    print_matrix(a22, "a22");
     /* Calculate seven formulas of Strassen Algorithm */
     arith->Addition(s1, a21, a22);
     arith->Subtract(s2, s1, a11 );
@@ -347,8 +351,8 @@ void reset_matrices(Matrix a, Matrix b, Matrix c, int size)
     {
         for (int j = 0; j < size; j++) 
         {
-            a.values[i][j] = i;
-            b.values[i][j] = j;
+            a.values[i][j] = i + j;
+            b.values[i][j] = i + j;
             c.values[i][j] = 0.0;
         }
     }
