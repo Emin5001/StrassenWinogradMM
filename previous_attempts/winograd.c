@@ -39,6 +39,54 @@ void matrix_subtract (double **, double **, double **, int);
 void strassen_temp (double **, double **, double **, int);
 void print_matrix (double **, int);
 
+int TR = 2, TC = 2;
+
+int layout (int i, int j)
+{
+    // i == row, j == col. 
+    // ti = T (i, tr) = i / tr
+    // tj = T (j, tc) = j / tc
+    // fi = F (i, tr) = i % tr
+    // fj = F (j, tc) = j % tc
+    // TR * TC * S (ti, tj) + Lr (fi, fj, tr, tc)
+    return TR * TC * S (i / TR, j / TC) + L_r (i % TR, j % TC, TC);
+}
+
+int L_r (int i, int j, int n)
+{
+    return n * i + j;
+}
+
+void convertToMorton(double *matrix, double *morton, int size)
+{
+    for (int row = 0; row < size; row++)
+    {
+        for (int col = 0; col < size; col++)
+        {
+            int res = layout (row, col);
+            morton[res] = matrix[row * size + col];
+        }
+    }
+}
+
+// source: https://graphics.stanford.edu/~seander/bithacks.html#InterleaveBMN
+unsigned int S (unsigned int x, unsigned int y)
+{
+    unsigned int z = 0;
+    x = (x | (x << F[3])) & E[3];
+    x = (x | (x << F[2])) & E[2];
+    x = (x | (x << F[1])) & E[1];
+    x = (x | (x << F[0])) & E[0];
+
+    y = (y | (y << F[3])) & E[3];
+    y = (y | (y << F[2])) & E[2];
+    y = (y | (y << F[1])) & E[1];
+    y = (y | (y << F[0])) & E[0];
+
+    z = y | (x << 1);
+    return z;
+}
+
 int sizes[12] = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
 int main()
 {
@@ -50,6 +98,8 @@ int main()
     double **B  = (double **) malloc (SIZE * sizeof(double *));
     double **C  = (double **) malloc (SIZE * sizeof(double *));
     double **D  = (double **) malloc (SIZE * sizeof(double *)); // used for checking validity.
+    double **A_morton  = (double **) malloc (SIZE * sizeof(double *));
+    double **B_morton  = (double **) malloc (SIZE * sizeof(double *));
 
     double **p1 = (double **) malloc (half * sizeof(double *));
     double **p2 = (double **) malloc (half * sizeof(double *));
@@ -86,7 +136,7 @@ int main()
     double **b12 = (double **) malloc (half * sizeof(double *));
     double **b21 = (double **) malloc (half * sizeof(double *));
     double **b22 = (double **) malloc (half * sizeof(double *));
-
+    int num = 0;
     for (int i = 0; i < SIZE; i++)
     {
         A[i]  = (double *) malloc(SIZE * sizeof(double));
@@ -95,10 +145,11 @@ int main()
         D[i]  = (double *) malloc(SIZE * sizeof(double));
         for (int j = 0; j < SIZE; j++)
         {
-            A[i][j] = i + j;
-            B[i][j] = i + j;
+            A[i][j] = num;
+            B[i][j] = num;
             C[i][j] = 0;
             D[i][j] = 0;
+            num += 1;
         }
     }
 
@@ -262,13 +313,13 @@ void strassen_temp(double **A, double **B, double **C, int size)
 {
     if (size == 2)
     {
-        printf("multiplying: \n");
-        print_matrix(A, size);
-        printf("by\n");
-        print_matrix(B, size);
+        // printf("multiplying: \n");
+        // print_matrix(A, size);
+        // printf("by\n");
+        // print_matrix(B, size);
         naive(A, B, C, size);
-        printf("result is \n");
-        print_matrix(C, size);
+        // printf("result is \n");
+        // print_matrix(C, size);
         // C[0][0] = (A[0][0] * B[0][0]) + (A[0][1] * B[1][0]);
         // C[0][1] = (A[0][0] * B[0][1]) + (A[0][1] * B[1][1]);
         // C[1][0] = (A[1][0] * B[0][0]) + (A[1][1] * B[1][0]);
@@ -499,7 +550,7 @@ void strassen_temp(double **A, double **B, double **C, int size)
         matrix_add (c12, u3, p7, half);
         matrix_add (c22, u3, p3, half);
         matrix_add (c21, u6, p6, half);
-
+        
         for (int i = 0; i < half; i++)
         {
             for (int j = 0; j < half; j++)

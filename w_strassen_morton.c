@@ -4,11 +4,10 @@
 #include <math.h>
 
 void  strassen(int, double *, double *, double *, double *, 
-              double *, double *, double *, double *, double *,
-              double *, double *, double *, double *, double *,
+              double *, double *,
               double *, double *, double *, double *, double *, 
               double *, double *, double *, double *, double *, 
-              double *p6, double *p7);
+              double *, double *);
 void         morton_naive           (double *, double *, double *, uint32_t);
 void         matrix_subtr    (double *, double *, double *, uint32_t);
 void         matrix_add      (double *, double *, double *, uint32_t);
@@ -16,6 +15,7 @@ void         naive           (double *, double *, double *, uint32_t);
 unsigned int S               (unsigned int, unsigned int);
 void         convertToMorton (double *, double *, int);
 void         print_matrix    (double *, uint32_t);
+void         spcl_print      (double *, int, int);
 double       rand_from       (double, double);
 int          L_r             (int, int, int);  
 void         print_bits      (unsigned int);
@@ -69,12 +69,14 @@ int main()
 
 
         // initialize A and B 
-        for (int i = 0; i < n; i++) 
+        for (int i = 0; i < n * n; i++) 
         {
-            for (int j = 0; j < n; j++) {
-                A[i * n + j] = i + j;
-                B[i * n + j] = i + j;
-            }
+            A[i] = i;
+            B[i] = i;
+            // for (int j = 0; j < n; j++) {
+            //     A[i * n + j] = i + j;
+            //     B[i * n + j] = i + j;
+            // }
             
             // for (int j = 0; j < n; j++) 
             // {
@@ -88,12 +90,12 @@ int main()
         // print_matrix (A_Morton, n);
         convertToMorton(B, B_Morton, n);
         // printf("Initially B_Morton is:\n");
-        printf("Initial A is \n");
+        printf("A is \n");
         print_matrix(A, n);
-        printf("Initial B is \n");
+        printf("B is \n");
         print_matrix(B, n);
         // print_matrix (B_Morton, n);
-        strassen (n, A_Morton, B_Morton, C, a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7);
+        strassen (n, A_Morton, B_Morton, C, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7);
         naive (A, B, D, n);
         printf("C is:\n");
         print_matrix (C, n);
@@ -107,17 +109,16 @@ int main()
     return 0;
 }
 
-void strassen (int size, double *A, double *B, double *C, double *a11, 
-                  double *a12, double *a21, double *a22, double *b11, double *b12,
-                  double *b21, double *b22, double *s1, double *s2, double *s3,
+void strassen (int size, double *A, double *B, double *C,
+                  double *s1, double *s2, double *s3,
                   double *s4, double *t1, double *t2, double *t3, double *t4, 
                   double *p1, double *p2, double *p3, double *p4, double *p5, 
                   double *p6, double *p7)
 {
     // tr == tc == 2. 
-    if (size == 2) 
+    if (size == TR) 
     {
-        naive(A, B, C, size);
+        naive   (A, B, C, size);
         return;
     }
     int newSize = size / 2;
@@ -125,69 +126,56 @@ void strassen (int size, double *A, double *B, double *C, double *a11,
     print_matrix(A, size);
     printf("__B__ is \n");
     print_matrix(B, size);
-    for (int i = 0; i < newSize; i++) 
-    {
-        for (int j = 0; j < newSize; j++) 
-        {
-            // a11[i * newSize + j] = A[i * size + j]; 
-            // a12[i * newSize + j] = A[i * size + (j + newSize)];
-            // a21[i * newSize + j] = A[(i + newSize) * size + j];
-            // a22[i * newSize + j] = A[(i + newSize) * size + (j + newSize)];
-
-            // b11[i * newSize + j] = B[i * size + j]; 
-            // b12[i * newSize + j] = B[i * size + (j + newSize)];
-            // b21[i * newSize + j] = B[(i + newSize) * size + j];
-            // b22[i * newSize + j] = B[(i + newSize) * size + (j + newSize)];
-
-            a11[layout(i, j)] = A[layout(i, j)]; 
-            a12[layout(i, j)] = A[layout(i, j + newSize)];
-            a21[layout(i, j)] = A[layout(i + newSize, j)];
-            a22[layout(i, j)] = A[layout(i + newSize, j + newSize)];
-
-            b11[layout(i, j)] = B[layout(i, j)]; 
-            b12[layout(i, j)] = B[layout(i, j + newSize)];
-            b21[layout(i, j)] = B[layout(i + newSize, j)];
-            b22[layout(i, j)] = B[layout(i + newSize, j + newSize)];
-        }
-    }
     
-
+    // A[0:15]
     printf("**a11** is \n");
-    print_matrix(a11, newSize);
-    printf("**a12** is \n");
-    print_matrix(a12, newSize);
-    printf("**a21** is \n");
-    print_matrix(a21, newSize);
-    printf("**a22** is \n");
-    print_matrix(a22, newSize);
+    spcl_print(A, 0, newSize);
+    // A[16:31]
+    printf("\n**a12** is \n");
+    spcl_print(A, newSize * newSize, newSize);
+    
+    // A[32:47]
+    printf("\n**a21** is \n");
+    spcl_print(A, newSize * newSize * 2, newSize);
+    
+    //A[48:64]
+    printf("\n**a22** is \n");
+    spcl_print(A, newSize * newSize * 3, newSize);
 
-    printf("**b11 is** \n");
-    print_matrix(b11, newSize);
-    printf("**b12 is** \n");
-    print_matrix(b12, newSize);
-    printf("**b21 is **\n");
-    print_matrix(b21, newSize);
-    printf("**b22 is **\n");
-    print_matrix(b22, newSize);
+    // a11 = A + 0
+    // a12 = A + ((newSize * newSize) * 1)
+    // a21 = A + ((newSize * newSize) * 2)
+    // a22 = A + ((newSize * newSize) * 3)
+    
+    // S1 = A21 + A22
+    matrix_add   (A + ((newSize * newSize) * 2) , A + ((newSize * newSize) * 3), s1, newSize);
+    // S2 = S1 - A11
+    matrix_subtr (s1, A,  s2, newSize);
+    // S3 = A11 - A21
+    matrix_subtr (A, A + ((newSize * newSize) * 2), s3, newSize);
+    // S4 = A12 - S2
+    matrix_subtr (A + ((newSize * newSize) * 1), s2,  s4, newSize);
 
-    matrix_add   (a21, a22, s1, newSize);
-    matrix_subtr (s1, a11,  s2, newSize);
-    matrix_subtr (a11, a21, s3, newSize);
-    matrix_subtr (a12, s2,  s4, newSize);
-
-    printf("**s1** is \n");
+    printf("\n**s1** is \n");
     print_matrix(s1, newSize);
+    
     printf("**s2** is \n");
     print_matrix(s2, newSize);
+
     printf("**s3** is \n");
     print_matrix(s3, newSize);
+
     printf("**s4** is \n");
     print_matrix(s4, newSize);
 
-    matrix_subtr (b12, b11, t1, newSize);
-    matrix_subtr (b22, t1,  t2, newSize);
-    matrix_subtr (b22, b12, t3, newSize);
-    matrix_subtr (b21, t2,  t4, newSize);
+    // T1 = B12 - B11
+    matrix_subtr (B + ((newSize * newSize) * 1), B, t1, newSize);
+    // T2 = B22 - T1
+    matrix_subtr (B + ((newSize * newSize) * 3), t1,  t2, newSize);
+    // T3 = B22 - B12
+    matrix_subtr (B + ((newSize * newSize) * 3), B + ((newSize * newSize) * 1), t3, newSize);
+    // T4 = B21 - T2
+    matrix_subtr (B + ((newSize * newSize) * 2), t2,  t4, newSize);
 
     printf("**t1** is \n");
     print_matrix(t1, newSize);
@@ -198,41 +186,67 @@ void strassen (int size, double *A, double *B, double *C, double *a11,
     printf("**t4** is \n");
     print_matrix(t4, newSize);
 
-    strassen(newSize, a11, b11, p1, a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7); 
+    // a11 = A + 0
+    // a12 = A + ((newSize * newSize) * 1)
+    // a21 = A + ((newSize * newSize) * 2)
+    // a22 = A + ((newSize * newSize) * 3)
+
+    // P1 = A11 * B11
+    strassen(newSize, A, B, p1, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7); 
+    // P2 = A12 * B21
+    strassen(newSize, A + ((newSize * newSize) * 1), B + ((newSize * newSize) * 2), p2, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7);
+    // P3 = S1 * T1
+    strassen(newSize, s1, t1, p3, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7);
+    // P4 = S2 * T2
+    strassen(newSize, s2, t2, p4, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7); 
+    // P5 = S3 * T3
+    strassen(newSize, s3, t3, p5, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7);
+    // P6 = S4 * B22
+    strassen(newSize, s4, B + ((newSize * newSize) * 3), p6, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7);
+    // P7 = A22 * T4
+    strassen(newSize, A + ((newSize * newSize) * 3), t4, p7, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7);    
+
     printf("**p1** is \n");
-    print_matrix(p1, sizes[0]);
-    strassen(newSize, a12, b21, p2, a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7);
+    print_matrix(p1, newSize);
     printf("**p2** is \n");
-    print_matrix(p2, sizes[0]);
-    strassen(newSize, s1, t1, p3  , a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7);
+    print_matrix(p2, newSize);
     printf("**p3** is \n");
-    print_matrix(p3, sizes[0]);
-    strassen(newSize, s2, t2, p4  , a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7); 
+    print_matrix(p3, newSize);
     printf("**p4** is \n");
-    print_matrix(p4, sizes[0]);
-    strassen(newSize, s3, t3, p5  , a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7);
+    print_matrix(p4, newSize);
     printf("**p5** is \n");
-    print_matrix(p5, sizes[0]);
-    strassen(newSize, s4, b22, p6 , a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7);
+    print_matrix(p5, newSize);
     printf("**p6** is \n");
-    print_matrix(p6, sizes[0]);
-    strassen(newSize, a22, t4, p7 , a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7);    
+    print_matrix(p6, newSize);
     printf("**p7** is \n");
-    print_matrix(p7, sizes[0]);
+    print_matrix(p7, newSize);
+
+    // a11 = A + 0
+    // a12 = A + ((newSize * newSize) * 1)
+    // a21 = A + ((newSize * newSize) * 2)
+    // a22 = A + ((newSize * newSize) * 3)
 
     // join partitions back into C
-    for (int i = 0; i < newSize; i++) 
-    {
-        for (int j = 0; j < newSize; j++) 
-        {
-            C[layout(i, j)]                         = p1[layout(i, j)] + p2[layout(i, j)];
-            C[layout(i, j + newSize)]               = p1[layout(i, j)] + p4[layout(i, j)] + p3[layout(i, j)] + p6[layout(i, j)]; 
-            C[layout(i + newSize, j)]             = p1[layout(i, j)] + p4[layout(i, j)] + p5[layout(i, j)] + p7[layout(i, j)]; 
-            C[layout(i + newSize, j + newSize)] = p1[layout(i, j)] + p4[layout(i, j)] + p5[layout(i, j)] + p3[layout(i, j)];
-        }
+    for (int i = 0; i < newSize * newSize; i++) {
+        C[i + 0] = p1[i] + p2[i];
+        C[i + ((newSize * newSize) * 1)] = p1[i] + p4[i] + p3[i] + p6[i];
+        C[i + ((newSize * newSize) * 2)] = p1[i] + p4[i] + p5[i] + p7[i];
+        C[i + ((newSize * newSize) * 3)] = p1[i] + p4[i] + p5[i] + p3[i];
     }
+
+    // for (int i = 0; i < newSize; i++) 
+    // {
+    //     for (int j = 0; j < newSize; j++) 
+    //     {
+    //         C[i * newSize + j] = p1[i * newSize + j] + p2[i * newSize + j];
+    //         C[i * newSize + (j + newSize)] = p1[i * newSize + j] + p4[i * newSize + j] + p3[i * newSize + j] + p6[i * newSize + j]; 
+    //         C[(i + newSize) * newSize + j] = p1[i * newSize + j] + p4[i * newSize + j] + p5[i * newSize + j] + p7[i * newSize + j]; 
+    //         C[(i + newSize) * newSize + (j + newSize) * newSize] = p1[i * newSize + j] + p4[i * newSize + j] + p5[i * newSize + j] + p3[i * newSize + j];
+    //     }
+    // }
+    
     printf("at the end, C is \n");
-    print_matrix(C, sizes[0]);
+    print_matrix(C, size);
 }
 
 // source: https://dl.acm.org/doi/pdf/10.1145/305619.305645 pg. 225
@@ -284,24 +298,30 @@ unsigned int S (unsigned int x, unsigned int y)
 
 void matrix_subtr (double *a, double *b, double *res, uint32_t size)
 {
-    for (uint32_t i = 0; i < size * size; i++)
-    {
-        for (uint32_t j = 0; j < size; j++)
-        {
-            res[layout(i, j)] = a[layout(i, j)] - b[layout(i, j)];
-        }
+    for (uint32_t i = 0; i < size * size; i++) {
+        res[i] = a[i] - b[i];
     }
+    // for (uint32_t i = 0; i < size * size; i++)
+    // {
+    //     for (uint32_t j = 0; j < size; j++)
+    //     {
+    //         res[i * size + j] = a[i * size + j] - b[i * size + j];
+    //     }
+    // }
 }
 
 void matrix_add (double *a, double *b, double *res, uint32_t size)
 {
-    for (uint32_t i = 0; i < size; i++)
-    {
-        for (uint32_t j = 0; j < size; j++)
-        {
-            res[layout(i, j)] = a[layout(i, j)] + b[layout(i, j)];
-        }
+    for (uint32_t i = 0; i < size * size; i++) {
+        res[i] = a[i] + b[i];
     }
+    // for (uint32_t i = 0; i < size; i++)
+    // {
+    //     for (uint32_t j = 0; j < size; j++)
+    //     {
+    //         res[i * size + j] = a[i * size + j] + b[i * size + j];
+    //     }
+    // }
 }
 
 void naive (double *a, double *b, double *res, uint32_t size)
@@ -342,6 +362,15 @@ double rand_from (double min, double max)
     double rand_decimal = ((double) rand() / RAND_MAX) * (max - min) + min;
     
     return (uint32_t) (rand_decimal * 100.0 + 0.5) / 100.0;
+}
+
+void spcl_print (double *matrix, int starting, int size) {
+    for (int i = 0; i < size * size; i++) {
+        if (i % size == 0) {
+            printf("\n");
+        }
+        printf("%.1f ", matrix[i + starting]);
+    }
 }
 
 void print_matrix (double *matrix, uint32_t size)
