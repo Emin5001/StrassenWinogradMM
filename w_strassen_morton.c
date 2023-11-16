@@ -6,8 +6,7 @@
 void  strassen(int, double *, double *, double *, double *, 
               double *, double *, double *, double *, double *, 
               double *, double *, double *, double *, double *, 
-              double *, double *, double *, double *, double *, 
-              double *, double *, double *, double *, double *, double *);
+              double *, double *, double *, double *, double *);
 void         morton_naive           (double *, double *, double *, uint32_t);
 void         matrix_subtr    (double *, double *, double *, uint32_t);
 void         matrix_add      (double *, double *, double *, uint32_t);
@@ -39,15 +38,17 @@ int main()
         double *C   = (double *) calloc (n * n, sizeof (double));
         double *D   = (double *) calloc (n * n, sizeof (double));
 
-        double *s1  = (double *) calloc (newSize * newSize, sizeof (double));
-        double *s2  = (double *) calloc (newSize * newSize, sizeof (double));
-        double *s3  = (double *) calloc (newSize * newSize, sizeof (double));
-        double *s4  = (double *) calloc (newSize * newSize, sizeof (double));
+        double *S  =  (double *) calloc (n * n, sizeof (double));
+        double *T  =  (double *) calloc (n * n, sizeof (double));
+        // double *s1  = (double *) calloc (newSize * newSize, sizeof (double));
+        // double *s2  = (double *) calloc (newSize * newSize, sizeof (double));
+        // double *s3  = (double *) calloc (newSize * newSize, sizeof (double));
+        // double *s4  = (double *) calloc (newSize * newSize, sizeof (double));
 
-        double *t1  = (double *) calloc (newSize * newSize, sizeof (double));
-        double *t2  = (double *) calloc (newSize * newSize, sizeof (double));
-        double *t3  = (double *) calloc (newSize * newSize, sizeof (double));
-        double *t4  = (double *) calloc (newSize * newSize, sizeof (double));
+        // double *t1  = (double *) calloc (newSize * newSize, sizeof (double));
+        // double *t2  = (double *) calloc (newSize * newSize, sizeof (double));
+        // double *t3  = (double *) calloc (newSize * newSize, sizeof (double));
+        // double *t4  = (double *) calloc (newSize * newSize, sizeof (double));
 
         double *p1  = (double *) calloc (newSize * newSize, sizeof (double));
         double *p3  = (double *) calloc (newSize * newSize, sizeof (double));
@@ -79,7 +80,7 @@ int main()
         print_matrix(A, n);
         printf("B is \n");
         print_matrix(B, n);
-        strassen (n, A_Morton, B_Morton, C, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
+        strassen (n, A_Morton, B_Morton, C, S, T, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
         naive (A, B, D, n);
         printf("C is:\n");
         print_matrix (C, n);
@@ -94,15 +95,22 @@ int main()
 }
 
 void strassen (int size, double *A, double *B, double *C,
-                  double *s1, double *s2, double *s3,
-                  double *s4, double *t1, double *t2, double *t3, double *t4, 
-                  double *p1, double *p2, double *p3, double *p4, double *p5, 
-                  double *p6, double *p7, double *u1, double *u2, double *u3,
-                  double *u4, double *u5, double *u6, double *u7)
-{
-    if (size == TR) 
-    {
-        naive   (A, B, C, size);
+                  double *S, double *T, double *p1, double *p2, double *p3, 
+                  double *p4, double *p5, double *p6, double *p7, double *u1, 
+                  double *u2, double *u3, double *u4, double *u5, double *u6, 
+                  double *u7) {
+    if (size == TR) {
+        printf("multiplyin\n");
+        print_matrix(A, size);
+        printf("\nwith:\n");
+        print_matrix(B, size);
+        // naive   (A, B, C, size);
+        C[0] = A[0] * B[0] + A[1] * B[2];
+        C[1] = A[0] * B[1] + A[1] * B[3];
+        C[2] = A[2] * B[0] + A[3] * B[2];
+        C[3] = A[2] * B[1] + A[3] * B[3];
+        printf("result is \n");
+        print_matrix(C, size);
         return;
     }
     
@@ -127,65 +135,86 @@ void strassen (int size, double *A, double *B, double *C,
     printf("\n**a22** is \n");
     spcl_print(A, (newSize * newSize) * 3, newSize);
 
+    printf("**b11** is \n");
+    spcl_print(B, 0, newSize);
+    // A[16:31]
+    printf("\n**b12** is \n");
+    spcl_print(B, (newSize * newSize), newSize);
+    
+    // A[32:47]
+    printf("\n**b21** is \n");
+    spcl_print(B, (newSize * newSize) * 2, newSize);
+    
+    //A[48:64]
+    printf("\n**b22** is \n");
+    spcl_print(B, (newSize * newSize) * 3, newSize);
+
     // a11 = A + 0
     // a12 = A + ((newSize * newSize) * 1)
     // a21 = A + ((newSize * newSize) * 2)
     // a22 = A + ((newSize * newSize) * 3)
     
     // S1 = A21 + A22
-    matrix_add   (A + ((newSize * newSize) * 2) , A + ((newSize * newSize) * 3), s1, newSize);
+    matrix_add   (A + ((newSize * newSize) * 2) , A + ((newSize * newSize) * 3), S, newSize);
     // S2 = S1 - A11
-    matrix_subtr (s1, A,  s2, newSize);
+    matrix_subtr (S, A,  S + ((newSize * newSize) * 1), newSize);
     // S3 = A11 - A21
-    matrix_subtr (A, A + ((newSize * newSize) * 2), s3, newSize);
+    matrix_subtr (A, A + ((newSize * newSize) * 2), S + ((newSize * newSize) * 2), newSize);
     // S4 = A12 - S2
-    matrix_subtr (A + ((newSize * newSize) * 1), s2,  s4, newSize);
+    matrix_subtr (A + ((newSize * newSize) * 1), S + ((newSize * newSize) * 1),  S + ((newSize * newSize) * 3), newSize);
 
     printf("\n**s1** is \n");
-    print_matrix(s1, newSize);
+    print_matrix(S, newSize);
     
     printf("**s2** is \n");
-    print_matrix(s2, newSize);
+    print_matrix(S + ((newSize * newSize) * 1), newSize);
 
     printf("**s3** is \n");
-    print_matrix(s3, newSize);
+    print_matrix(S + ((newSize * newSize) * 2), newSize);
 
     printf("**s4** is \n");
-    print_matrix(s4, newSize);
+    print_matrix(S + ((newSize * newSize) * 3), newSize);
 
     // T1 = B12 - B11
-    matrix_subtr (B + ((newSize * newSize) * 1), B, t1, newSize);
+    matrix_subtr (B + ((newSize * newSize) * 1), B, T, newSize);
     // T2 = B22 - T1
-    matrix_subtr (B + ((newSize * newSize) * 3), t1,  t2, newSize);
+    matrix_subtr (B + ((newSize * newSize) * 3), T,  T + ((newSize * newSize) * 1), newSize);
     // T3 = B22 - B12
-    matrix_subtr (B + ((newSize * newSize) * 3), B + ((newSize * newSize) * 1), t3, newSize);
+    matrix_subtr (B + ((newSize * newSize) * 3), B + ((newSize * newSize) * 1), T + ((newSize * newSize) * 2), newSize);
     // T4 = B21 - T2
-    matrix_subtr (B + ((newSize * newSize) * 2), t2,  t4, newSize);
+    matrix_subtr (B + ((newSize * newSize) * 2), T + ((newSize * newSize) * 1),  T + ((newSize * newSize) * 3), newSize);
 
     printf("**t1** is \n");
-    print_matrix(t1, newSize);
+    print_matrix(T, newSize);
     printf("**t2** is \n");
-    print_matrix(t2, newSize);
+    print_matrix(T + (newSize * newSize), newSize);
     printf("**t3** is \n");
-    print_matrix(t3, newSize);
+    print_matrix(T + ((newSize * newSize) * 2), newSize);
     printf("**t4** is \n");
-    print_matrix(t4, newSize);
+    print_matrix(T + ((newSize * newSize) * 3), newSize);
 
     // P1 = A11 * B11
-    strassen(newSize, A, B, p1, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7); 
+    printf("********** calling strassen for P1 **********\n");
+    strassen(newSize, A, B, p1, S, T, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7); 
     // P2 = A12 * B21
-    strassen(newSize, A + ((newSize * newSize) * 1), B + ((newSize * newSize) * 2), p2, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, 
+    printf("********** calling strassen for P2 **********\n");
+    strassen(newSize, A + ((newSize * newSize) * 1), B + ((newSize * newSize) * 2), p2, S, T, p1, p2, p3, p4, p5, p6, p7, 
     u1, u2, u3, u4, u5, u6, u7);
     // P3 = S1 * T1
-    strassen(newSize, s1, t1, p3, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
+    printf("********** calling strassen for P3 **********\n");
+    strassen(newSize, S, T, p3, S, T, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
     // P4 = S2 * T2
-    strassen(newSize, s2, t2, p4, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7); 
+    printf("********** calling strassen for P4 **********\n");
+    strassen(newSize, S + ((newSize * newSize) * 1), T + ((newSize * newSize) * 1), p4, S, T, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7); 
     // P5 = S3 * T3
-    strassen(newSize, s3, t3, p5, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
+    printf("********** calling strassen for P5 **********\n");
+    strassen(newSize, S + ((newSize * newSize) * 2), T + ((newSize * newSize) * 2), p5, S, T, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
     // P6 = S4 * B22
-    strassen(newSize, s4, B + ((newSize * newSize) * 3), p6, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
+    printf("********** calling strassen for P6 **********\n");
+    strassen(newSize, S + ((newSize * newSize) * 3), B + ((newSize * newSize) * 3), p6, S, T, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
     // P7 = A22 * T4
-    strassen(newSize, A + ((newSize * newSize) * 3), t4, p7, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);    
+    printf("********** calling strassen for P7 **********\n");
+    strassen(newSize, A + ((newSize * newSize) * 3), T + ((newSize * newSize) * 3), p7, S, T, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);    
 
     printf("**p1** is \n");
     print_matrix(p1, newSize);

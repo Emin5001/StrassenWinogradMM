@@ -41,51 +41,51 @@ void print_matrix (double **, int);
 
 int TR = 2, TC = 2;
 
-int layout (int i, int j)
-{
-    // i == row, j == col. 
-    // ti = T (i, tr) = i / tr
-    // tj = T (j, tc) = j / tc
-    // fi = F (i, tr) = i % tr
-    // fj = F (j, tc) = j % tc
-    // TR * TC * S (ti, tj) + Lr (fi, fj, tr, tc)
-    return TR * TC * S (i / TR, j / TC) + L_r (i % TR, j % TC, TC);
-}
+// int layout (int i, int j)
+// {
+//     // i == row, j == col. 
+//     // ti = T (i, tr) = i / tr
+//     // tj = T (j, tc) = j / tc
+//     // fi = F (i, tr) = i % tr
+//     // fj = F (j, tc) = j % tc
+//     // TR * TC * S (ti, tj) + Lr (fi, fj, tr, tc)
+//     return TR * TC * S (i / TR, j / TC) + L_r (i % TR, j % TC, TC);
+// }
 
-int L_r (int i, int j, int n)
-{
-    return n * i + j;
-}
+// int L_r (int i, int j, int n)
+// {
+//     return n * i + j;
+// }
 
-void convertToMorton(double *matrix, double *morton, int size)
-{
-    for (int row = 0; row < size; row++)
-    {
-        for (int col = 0; col < size; col++)
-        {
-            int res = layout (row, col);
-            morton[res] = matrix[row * size + col];
-        }
-    }
-}
+// void convertToMorton(double *matrix, double *morton, int size)
+// {
+//     for (int row = 0; row < size; row++)
+//     {
+//         for (int col = 0; col < size; col++)
+//         {
+//             int res = layout (row, col);
+//             morton[res] = matrix[row * size + col];
+//         }
+//     }
+// }
 
-// source: https://graphics.stanford.edu/~seander/bithacks.html#InterleaveBMN
-unsigned int S (unsigned int x, unsigned int y)
-{
-    unsigned int z = 0;
-    x = (x | (x << F[3])) & E[3];
-    x = (x | (x << F[2])) & E[2];
-    x = (x | (x << F[1])) & E[1];
-    x = (x | (x << F[0])) & E[0];
+// // source: https://graphics.stanford.edu/~seander/bithacks.html#InterleaveBMN
+// unsigned int S (unsigned int x, unsigned int y)
+// {
+//     unsigned int z = 0;
+//     x = (x | (x << F[3])) & E[3];
+//     x = (x | (x << F[2])) & E[2];
+//     x = (x | (x << F[1])) & E[1];
+//     x = (x | (x << F[0])) & E[0];
 
-    y = (y | (y << F[3])) & E[3];
-    y = (y | (y << F[2])) & E[2];
-    y = (y | (y << F[1])) & E[1];
-    y = (y | (y << F[0])) & E[0];
+//     y = (y | (y << F[3])) & E[3];
+//     y = (y | (y << F[2])) & E[2];
+//     y = (y | (y << F[1])) & E[1];
+//     y = (y | (y << F[0])) & E[0];
 
-    z = y | (x << 1);
-    return z;
-}
+//     z = y | (x << 1);
+//     return z;
+// }
 
 int sizes[12] = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
 int main()
@@ -313,11 +313,13 @@ void strassen_temp(double **A, double **B, double **C, int size)
 {
     if (size == 2)
     {
-        // printf("multiplying: \n");
-        // print_matrix(A, size);
-        // printf("by\n");
-        // print_matrix(B, size);
+        printf("multiplying: \n");
+        print_matrix(A, size);
+        printf("with:\n");
+        print_matrix(B, size);
         naive(A, B, C, size);
+        printf("result is \n");
+        print_matrix(C, size);
         // printf("result is \n");
         // print_matrix(C, size);
         // C[0][0] = (A[0][0] * B[0][0]) + (A[0][1] * B[1][0]);
@@ -509,13 +511,19 @@ void strassen_temp(double **A, double **B, double **C, int size)
         printf("**t4** is \n");
         print_matrix(t4, half);
 
-
+        printf("********** calling strassen for P1 **********\n");
         strassen_temp (a11, b11, p1, half);
+        printf("********** calling strassen for P2 **********\n");
         strassen_temp (a12, b21, p2, half);
+        printf("********** calling strassen for P3 **********\n");
         strassen_temp (s1,  t1,   p3, half);
+        printf("********** calling strassen for P4 **********\n");
         strassen_temp (s2,  t2,   p4, half);
+        printf("********** calling strassen for P5 **********\n");
         strassen_temp (s3,  t3,  p5, half);
+        printf("********** calling strassen for P6 **********\n");
         strassen_temp (s4,  b22, p6, half);
+        printf("********** calling strassen for P7 **********\n");
         strassen_temp (a22, t4,  p7, half);
         
         printf("**p1** is \n");
