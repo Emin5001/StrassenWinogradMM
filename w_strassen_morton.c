@@ -4,6 +4,11 @@
 #include <math.h>
 #include <time.h>
 
+struct pad_struct {
+  double *padded_a;
+  double *padded_b;
+}
+
 void  strassen  (int, double *, double *, double *, double *, 
               double *, double *, double *, double *, double *, 
               double *, double *, double *, double *, double *, 
@@ -15,18 +20,23 @@ void         naive             (double *, double *, double *, uint32_t);
 unsigned int S                 (unsigned int, unsigned int);
 void         convertFromMorton (double *, double *, int);
 void         convertToMorton   (double *, double *, int);
-
 void         print_matrix      (double *, uint32_t);
 void         spcl_print        (double *, int, int);
 double       rand_from         (double, double);
 int          L_r               (int, int, int);  
 void         print_bits        (unsigned int);
 int          layout            (int, int);
+bool power_of_two(int);
+int find_tilesize(int);
+struct pad_struct *pad_matrices(double *, double *, int, int);
+double *pad_matrix(double *, int, int);
+
 
 const unsigned int E[] = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF};
 const unsigned int F[] = {1, 2, 4, 8};
-const unsigned int TR = 2, TC = 2;
-int sizes[] = {8};
+const unsigned int TR = 16, TC = 16;
+
+int sizes[] = {513};
 int main() {
     for (int s = 0; s < 1; s++) {
         struct timespec tick, tock;
@@ -39,7 +49,6 @@ int main() {
         // start timing from here.
         double *A_Morton =  (double *) calloc (n * n, sizeof (double));
         double *B_Morton =  (double *) calloc (n * n, sizeof (double));
-        double *C   = (double *) calloc (n * n, sizeof (double));
         double *res = (double *) calloc (n * n, sizeof (double));
         // double *D   = (double *) calloc (n * n, sizeof (double));
         double *p1  = (double *) calloc (newSize * newSize, sizeof (double));
@@ -62,31 +71,31 @@ int main() {
             A[i] = i;
             B[i] = i;
         }
-
-        convertToMorton(A, A_Morton, n);
-        convertToMorton(B, B_Morton, n);
-        // printf("A is \n");
-        // print_matrix(A, n);
-        // printf("B is \n");
-        // print_matrix(B, n);
-
-        strassen (n, A_Morton, B_Morton, C, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
-        printf("Resulting C is: \n");
-        print_matrix(C, n);
-        convertFromMorton(res, C, n);
+        // if has to be padded
+        if (!power_of_two(n)) {
+          int tile_size = find_tilesize(n);
+          TR = tile_size;
+          TC = tile_size;
+          struct pad_struct padded = pad_matrices(a, b, tile_size, n);  
+          double *C = (double *) calloc (n + tile_size * n + tile_size, sizeof (double));
+        } else {
+          if (n <= tile_size) {
+            naive(A, B, C, size);
+          } else {
+            convertToMorton(A, A_Morton, n);
+            convertToMorton(B, B_Morton, n);
+            double *C = (double *) calloc (n * n, sizeof (double));
+            strassen(n, A_Morton, B_Morton, C, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
+            convertFromMorton(res, c, n);
+          }
+        }
         clock_gettime(CLOCK_REALTIME, &tock);
         elapsed_ns = (tock.tv_sec - tick.tv_sec) * 1000000000LL + (tock.tv_nsec - tick.tv_nsec);
-        printf("For size %d, CLOCK_REALTIME Clock elapsed: %lld ns\n", n, elapsed_ns);
-        // print_matrix(C, n);
 
+        printf("For size %d, CLOCK_REALTIME Clock elapsed: %lld ns\n", n, elapsed_ns);
         free(A); free(B); free(C); free(A_Morton); free(B_Morton); free(res); 
         free(p1); free(p2); free(p3); free(p4); free(p5); free(p6); free(p7);
         free(u1); free(u2); free(u3); free(u4); free(u5); free(u6); free(u7);
-
-        // naive (A, B, D, n);
-
-        // TODO: free memory
-
     }
     return 0;
 }
@@ -97,22 +106,7 @@ void strassen (int size, double *A, double *B, double *C,
                   double *u2, double *u3, double *u4, double *u5, double *u6, 
                   double *u7) {
     if (size == TR) {
-        // printf("multiplyin\n");
-        // print_matrix(A, size);
-        // printf("\nwith:\n");
-        // print_matrix(B, size);
         morton_naive(A, B, C, size);
-//        C[0] = A[0] * B[0] + A[1] * B[2];
-//        C[1] = A[0] * B[1] + A[1] * B[3];
-//        C[2] = A[2] * B[0] + A[3] * B[2];
-//        C[3] = A[2] * B[1] + A[3] * B[3];
-//        for (int i = 0; i < 4; i++) {
-//            if (C[i] == -0.0) {
-//                C[i] = 0.0;
-//            }
-//        }
-        // printf("result is \n");
-        // print_matrix(C, size);
         return;
     }
     
@@ -150,10 +144,6 @@ void strassen (int size, double *A, double *B, double *C,
     // //A[48:64]
     // printf("\n**b22** is \n");
     // spcl_print(B, (newSize * newSize) * 3, newSize);
-    double* a11 = calloc (newSize * newSize, sizeof(double));
-    for (int i = 0; i < newSize * newSize; i++) {
-      a11[i] = A[i];
-    }
     // a11 = A + 0
     // a12 = A + ((newSize * newSize) * 1)
     // a21 = A + ((newSize * newSize) * 2)
@@ -284,6 +274,55 @@ void strassen (int size, double *A, double *B, double *C,
     free(T);
     // printf("at the end, C is \n");
     // print_matrix(C, size);
+}
+
+double *pad_matrix(double *a, int tile_size, int size) {
+  int total_size = tile_size + size;
+  double *res = calloc(total_size * total_size, sizeof(double));
+  for (int i = 0; i < size; i++) {
+    res[i] = a[i];
+  }
+
+  return  res;
+}
+
+// helper method to pad matrices that are not of size powers of 2.
+struct pad_struct *pad_matrices(double *a, double *b, int tile_size, int size) {
+  struct pad_struct *ret;
+  int total_size = tile_size + size;
+  double *res_a = calloc(total_size * total_size, sizeof(double));
+  double *res_b = calloc(total_size * total_size, sizeof(double));
+  for (int i = 0; i < size; i++) {
+    res_a[i] = a[i];
+    res_b[i] = b[i];
+  }
+  ret->padded_a = res_a;
+  ret->padded_b = res_b;
+
+  return ret;
+}
+
+// helper method to check if a number is a power of two.
+bool power_of_two(int x) {
+  return (x & (x - 1)) == 0;
+}
+
+int find_tilesize(int size) {
+  // example: square matrix size of 513. Chosing size of 32 would mess it up, but choosing size of 33 
+  // would make it more efficient.
+  // Would add 15 of padding, making size = 528. 528 / 2 / 2 / 2 / 2 == 33. 
+
+  int initial_size = 32;
+  int tile_size = initial_size;
+
+  while ((tile_size *= 2) < size);
+  while (tile_size > size * 1.1) {
+    initial_size += 1;
+    tile_size = initial_size;
+    while ((tile_size *= 2) < size);
+  }
+
+  return initial_size;
 }
 
 // source: https://dl.acm.org/doi/pdf/10.1145/305619.305645 pg. 225
