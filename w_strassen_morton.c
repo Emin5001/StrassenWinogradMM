@@ -26,10 +26,9 @@ int          layout            (int, int);
 const unsigned int E[] = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF};
 const unsigned int F[] = {1, 2, 4, 8};
 const unsigned int TR = 2, TC = 2;
-int sizes[] = {2048};
+int sizes[] = {8};
 int main() {
-    for (int s = 0; s < 1; s++)
-    {
+    for (int s = 0; s < 1; s++) {
         struct timespec tick, tock;
         long long elapsed_ns;
         int n = sizes[s];
@@ -72,6 +71,8 @@ int main() {
         // print_matrix(B, n);
 
         strassen (n, A_Morton, B_Morton, C, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
+        printf("Resulting C is: \n");
+        print_matrix(C, n);
         convertFromMorton(res, C, n);
         clock_gettime(CLOCK_REALTIME, &tock);
         elapsed_ns = (tock.tv_sec - tick.tv_sec) * 1000000000LL + (tock.tv_nsec - tick.tv_nsec);
@@ -100,16 +101,16 @@ void strassen (int size, double *A, double *B, double *C,
         // print_matrix(A, size);
         // printf("\nwith:\n");
         // print_matrix(B, size);
-        // naive   (A, B, C, size);
-        C[0] = A[0] * B[0] + A[1] * B[2];
-        C[1] = A[0] * B[1] + A[1] * B[3];
-        C[2] = A[2] * B[0] + A[3] * B[2];
-        C[3] = A[2] * B[1] + A[3] * B[3];
-        for (int i = 0; i < 4; i++) {
-            if (C[i] == -0.0) {
-                C[i] = 0.0;
-            }
-        }
+        morton_naive(A, B, C, size);
+//        C[0] = A[0] * B[0] + A[1] * B[2];
+//        C[1] = A[0] * B[1] + A[1] * B[3];
+//        C[2] = A[2] * B[0] + A[3] * B[2];
+//        C[3] = A[2] * B[1] + A[3] * B[3];
+//        for (int i = 0; i < 4; i++) {
+//            if (C[i] == -0.0) {
+//                C[i] = 0.0;
+//            }
+//        }
         // printf("result is \n");
         // print_matrix(C, size);
         return;
@@ -120,7 +121,7 @@ void strassen (int size, double *A, double *B, double *C,
     // print_matrix(A, size);
     // printf("__B__ is \n");
     // print_matrix(B, size);
-    
+     
     // A[0:15]
     // printf("**a11** is \n");
     // spcl_print(A, 0, newSize);
@@ -149,7 +150,10 @@ void strassen (int size, double *A, double *B, double *C,
     // //A[48:64]
     // printf("\n**b22** is \n");
     // spcl_print(B, (newSize * newSize) * 3, newSize);
-
+    double* a11 = calloc (newSize * newSize, sizeof(double));
+    for (int i = 0; i < newSize * newSize; i++) {
+      a11[i] = A[i];
+    }
     // a11 = A + 0
     // a12 = A + ((newSize * newSize) * 1)
     // a21 = A + ((newSize * newSize) * 2)
@@ -366,16 +370,12 @@ void matrix_add (double *a, double *b, double *res, uint32_t size)
     // }
 }
 
-void naive (double *a, double *b, double *res, uint32_t size)
-{
+void naive (double *a, double *b, double *res, uint32_t size) {
     double sum = 0.0;
-    for (uint32_t i = 0; i < size; i++)
-    {
-        for (uint32_t j = 0; j < size; j++)
-        {
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
             sum = 0.0;
-            for (uint32_t k = 0; k < size; k++)
-            {
+            for (int k = 0; k < size; k++) {
                 sum += a[i * size + k] * b[k * size + j];
             }
             res[i * size + j] += sum;
@@ -392,9 +392,9 @@ void morton_naive (double *a, double *b, double *res, uint32_t size) {
             sum = 0.0;
             for (uint32_t k = 0; k < size; k++)
             {
-                sum += a[layout(i, k)] * b[layout(k, j)];
+              sum += a[i * size + k] * b[k * size + j]; 
             }
-            res[layout(i, j)] += sum;
+            res[i * size + j] = sum;
         }
     }
 }
