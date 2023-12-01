@@ -3,11 +3,13 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <stdbool.h>
+#include <papi.h>
 
 struct pad_struct {
   double *padded_a;
   double *padded_b;
-}
+} pad_struct;
 
 void  strassen  (int, double *, double *, double *, double *, 
               double *, double *, double *, double *, double *, 
@@ -19,7 +21,7 @@ void         matrix_add        (double *, double *, double *, uint32_t);
 void         naive             (double *, double *, double *, uint32_t);
 unsigned int S                 (unsigned int, unsigned int);
 void         convertFromMorton (double *, double *, int);
-void         convertToMorton   (double *, double *, int);
+void         convertToMorton   (double *, double *, double *, double *, int);
 void         print_matrix      (double *, uint32_t);
 void         spcl_print        (double *, int, int);
 double       rand_from         (double, double);
@@ -28,29 +30,49 @@ void         print_bits        (unsigned int);
 int          layout            (int, int);
 bool power_of_two(int);
 int find_tilesize(int);
-struct pad_struct *pad_matrices(double *, double *, int, int);
+// struct pad_struct *pad_matrices(double *, double *, int, int);
 double *pad_matrix(double *, int, int);
-
+double *unpad_matrix(double *, int, int);
+void print_data(long long *);
 
 const unsigned int E[] = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF};
 const unsigned int F[] = {1, 2, 4, 8};
-const unsigned int TR = 16, TC = 16;
+unsigned int TR = 16, TC = 16;
+int PAPI_one[4] = {
+    PAPI_L1_DCA,
+    PAPI_L1_DCM,
+    PAPI_L2_DCA,
+    PAPI_L2_DCM,
+};
 
-int sizes[] = {513};
+int sizes[] = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048};
 int main() {
-    for (int s = 0; s < 1; s++) {
+    int retval;
+    if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) == -1) {
+        fprintf(stderr, "Error initializing PAPI! %s\n", PAPI_strerror(retval));
+        return -1;
+    }
+    long long counters[4];
+    for (int s = 0; s < 11; s++) {
         struct timespec tick, tock;
         long long elapsed_ns;
         int n = sizes[s];
         int newSize = n / 2;
         double *A   = (double *) calloc (n * n, sizeof (double));
         double *B   = (double *) calloc (n * n, sizeof (double));
-        clock_gettime(CLOCK_REALTIME, &tick);
+        double *C   = (double *) calloc (n * n, sizeof (double));
+        // initialize A and B 
+        for (int i = 0; i < n * n; i++) {
+            A[i] = i;
+            B[i] = i;
+        }
         // start timing from here.
+        // if (PAPI_start_counters(PAPI_one, 4) != 0) {
+        //     fprintf(stderr, "An error has occurred\n");
+        // }
         double *A_Morton =  (double *) calloc (n * n, sizeof (double));
         double *B_Morton =  (double *) calloc (n * n, sizeof (double));
         double *res = (double *) calloc (n * n, sizeof (double));
-        // double *D   = (double *) calloc (n * n, sizeof (double));
         double *p1  = (double *) calloc (newSize * newSize, sizeof (double));
         double *p3  = (double *) calloc (newSize * newSize, sizeof (double));
         double *p2  = (double *) calloc (newSize * newSize, sizeof (double));
@@ -65,30 +87,44 @@ int main() {
         double *u4  = (double *) calloc (newSize * newSize, sizeof (double));
         double *u6  = (double *) calloc (newSize * newSize, sizeof (double));
         double *u7  = (double *) calloc (newSize * newSize, sizeof (double));
-
-        // initialize A and B 
-        for (int i = 0; i < n * n; i++) {
-            A[i] = i;
-            B[i] = i;
-        }
-        // if has to be padded
-        if (!power_of_two(n)) {
-          int tile_size = find_tilesize(n);
-          TR = tile_size;
-          TC = tile_size;
-          struct pad_struct padded = pad_matrices(a, b, tile_size, n);  
-          double *C = (double *) calloc (n + tile_size * n + tile_size, sizeof (double));
+        clock_gettime(CLOCK_REALTIME, &tick);
+        
+        // if (n % 4 != 0) {
+        //     int tile_size = find_tilesize(n);
+        //     double *padded_a = pad_matrix(A, tile_size, n);
+        //     double *padded_b = pad_matrix(B, tile_size, n);
+        //     convertToMorton(padded_a, A_Morton, n + tile_size);
+        //     convertToMorton(padded_b, B_Morton, n + tile_size);
+        //     double *C = (double *) calloc ((n + tile_size) * (n + tile_size), sizeof(double));
+        //     strassen(n, A_Morton, B_Morton, C, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
+        //     // C = unpad_matrix(C, tile_size, n);
+        // } else {
+        //     if (TR > n) {
+        //         naive(A, B, C, n);
+        //     } else {
+        //         convertToMorton(A, A_Morton, n);
+        //         convertToMorton(B, B_Morton, n);
+        //         double *C = (double *) calloc (n * n, sizeof(double));
+        //         strassen(n, A_Morton, B_Morton, C, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
+        //         convertFromMorton(res, C, n);
+        //     }
+        // }
+        if (TR > n) {
+            naive(A, B, C, n);
         } else {
-          if (n <= tile_size) {
-            naive(A, B, C, size);
-          } else {
-            convertToMorton(A, A_Morton, n);
-            convertToMorton(B, B_Morton, n);
-            double *C = (double *) calloc (n * n, sizeof (double));
+            convertToMorton(A, B, A_Morton, B_Morton, n);
+            
             strassen(n, A_Morton, B_Morton, C, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
-            convertFromMorton(res, c, n);
-          }
+            convertFromMorton(res, C, n);
         }
+        
+        // if (PAPI_stop_counters(counters, 4) != 0) {
+        //     fprintf(stderr, "An error has occured\n");
+        //     return -1;
+        // }
+        // printf("\033[1;32mTiming data for size=%d\033[0m\n", n);
+        // print_data(counters);
+
         clock_gettime(CLOCK_REALTIME, &tock);
         elapsed_ns = (tock.tv_sec - tick.tv_sec) * 1000000000LL + (tock.tv_nsec - tick.tv_nsec);
 
@@ -276,14 +312,20 @@ void strassen (int size, double *A, double *B, double *C,
     // print_matrix(C, size);
 }
 
-double *pad_matrix(double *a, int tile_size, int size) {
-  int total_size = tile_size + size;
-  double *res = calloc(total_size * total_size, sizeof(double));
-  for (int i = 0; i < size; i++) {
-    res[i] = a[i];
-  }
-
-  return  res;
+// helper method to pad matrix given the total tile size.
+double *pad_matrix(double *source, int orig_size, int padded_size) {
+    double *padded = (double *) calloc(padded_size * padded_size, sizeof(double));
+    int padded_idx = 0;
+    int diff = padded_size - orig_size;
+    for (int i = 0; i < orig_size * orig_size; i++) {
+        if (i > 0 && i % orig_size == 0) {
+            padded_idx += diff;
+        }
+        padded[padded_idx] = source[i];
+        padded_idx++;
+    }
+    
+    return padded;
 }
 
 // helper method to pad matrices that are not of size powers of 2.
@@ -312,11 +354,11 @@ int find_tilesize(int size) {
   // would make it more efficient.
   // Would add 15 of padding, making size = 528. 528 / 2 / 2 / 2 / 2 == 33. 
 
-  int initial_size = 32;
+  int initial_size = TR;
   int tile_size = initial_size;
 
   while ((tile_size *= 2) < size);
-  while (tile_size > size * 1.1) {
+  while (tile_size > size * 1.1 && tile_size < 64) {
     initial_size += 1;
     tile_size = initial_size;
     while ((tile_size *= 2) < size);
@@ -342,16 +384,22 @@ int L_r (int i, int j, int n)
     return n * i + j;
 }
 
-void convertToMorton(double *matrix, double *morton, int size)
+void convertToMorton(double *a, double *b, double *a_morton, double *b_morton, int size)
 {
     for (int row = 0; row < size; row++)
     {
         for (int col = 0; col < size; col++)
         {
             int res = layout (row, col);
-            morton[res] = matrix[row * size + col];
+            a_morton[res] = a[row * size + col];
+            b_morton[res] = b[row * size + col];
         }
     }
+}
+
+void print_data(long long *counters) {
+    printf("L1 Miss Rate is: %0.3f\n", ((float) counters[1] / (float) counters[0]));
+    printf("L2 Miss Rate is: %0.3f\n", ((float) counters[3] / (float) counters[2]));
 }
 
 void convertFromMorton(double *matrix, double *morton, int size) {
