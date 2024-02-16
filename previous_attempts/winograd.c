@@ -41,6 +41,7 @@ void print_matrix (double **, int);
 
 int TR = 2, TC = 2;
 
+// // source: https://dl.acm.org/doi/pdf/10.1145/305619.305645 pg. 225
 // int layout (int i, int j)
 // {
 //     // i == row, j == col. 
@@ -69,6 +70,15 @@ int TR = 2, TC = 2;
 //     }
 // }
 
+// void convertFromMorton(double *matrix, double *morton, int size) {
+//     for (int row = 0; row < size; row++) {
+//         for (int col = 0; col < size; col++) {
+//             int res = layout(row, col);
+//             matrix[res] = morton[row * size + col];
+//         }
+//     }
+// }
+
 // // source: https://graphics.stanford.edu/~seander/bithacks.html#InterleaveBMN
 // unsigned int S (unsigned int x, unsigned int y)
 // {
@@ -87,7 +97,8 @@ int TR = 2, TC = 2;
 //     return z;
 // }
 
-int sizes[12] = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
+// int sizes[12] = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
+int sizes[] = {8};
 int main()
 {
     int SIZE = 8;
@@ -152,7 +163,8 @@ int main()
             num += 1;
         }
     }
-
+    printf("A is \n");
+    print_matrix(A, SIZE);
     for (int i = 0; i < half; i++)
     {
         p1[i] = (double *) malloc(half * sizeof(double));
@@ -239,6 +251,8 @@ int main()
     
     printf("B is: \n");
     print_matrix (B, SIZE);
+    // convertToMorton(A, A_morton, SIZE);
+    // convertToMorton(B, B_morton, SIZE);
     // call strassen
     // strassen(SIZE, A, B, C, a11, a12, a21, a22, b11, b12, b21, b22, s1, s2, s3, s4, t1, t2, t3, t4, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7);
     strassen_temp(A, B, C, SIZE);
@@ -311,13 +325,20 @@ int main()
 
 void strassen_temp(double **A, double **B, double **C, int size)
 {
-    if (size == 2)
+    if (size == TR)
     {
-        printf("multiplying: \n");
-        print_matrix(A, size);
-        printf("with:\n");
-        print_matrix(B, size);
+        // C[0][0] = A[0][0] * B[0][0];
+        // printf("multiplying %f with %f resulting in %f\n", A[0][0], B[0][0], C[0][0]);
+        // printf("multiplying: \n");
+        // print_matrix(A, size);
+        // printf("with:\n");
+        // print_matrix(B, size);
+        printf("in multiplying");
         naive(A, B, C, size);
+        printf("multiplied\n");
+        print_matrix(A, size);
+        printf("by\n");
+        print_matrix(B, size);
         printf("result is \n");
         print_matrix(C, size);
         // printf("result is \n");
