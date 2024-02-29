@@ -4,7 +4,8 @@
 #include <math.h>
 #include <time.h>
 #include <stdbool.h>
-
+//#include <Accelerate/Accelerate.h>
+//#include <omp.h>
 
 struct pad_struct {
   double *padded_a;
@@ -44,25 +45,24 @@ int final_idx = 0;
 
 // int sizes[] = {32, 64, 128, 256, 512, 1024, 2048};
 //int sizes[] = {100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200}; 
-int sizes[] = {25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400};
+int sizes[] = {25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 625, 650, 675, 700};
 int main() { 
-  bool padded; struct pad_struct padded_matrices; 
-  for (int s = 0; s < 16; s++) {
+  bool padded; 
+  struct pad_struct padded_matrices; 
+  for (int s = 0; s < 28; s++) {
         struct timespec tick, tock;
         long long elapsed_ns;
         // int n = sizes[s];
         int n = sizes[s];
         int orig_size = n;
+        padded = false;
         double *A   = (double *) calloc (n * n, sizeof (double));
         double *B   = (double *) calloc (n * n, sizeof (double));
-        double *C   = (double *) calloc (n * n, sizeof (double));
         double *E   = (double *) calloc (n * n, sizeof (double));
         for (int i = 0; i < n * n; i++) {
             A[i] = i;
             B[i] = i;
         }
-        padded = false;
-
         clock_gettime(CLOCK_REALTIME, &tick);
         int newSize;
         if (!power_of_two(n)) { 
@@ -79,9 +79,10 @@ int main() {
                 TC = temp;
             }
         } 
-        printf("for size %d, TR=%d and TC=%d\n", n, TR, TC); 
         newSize = n / 2;
+
         
+        double *C   = (double *) calloc (n * n, sizeof (double));
         double *A_Morton =  (double *) calloc (n * n, sizeof (double));
         double *B_Morton =  (double *) calloc (n * n, sizeof (double));
         double *res = (double *) calloc (n * n, sizeof (double));
@@ -113,14 +114,15 @@ int main() {
         double *u7  = (double *) calloc (newSize * newSize, sizeof (double));
 
         // initialize A and B 
-
-        convertToMorton(A, A_Morton, n);
-        convertToMorton(B, B_Morton, n);
-
-        strassen(n, A_Morton, B_Morton, C, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7, final_p_addresses);
-        
         if (padded) {
+            convertToMorton(padded_matrices.padded_a, A_Morton, n);
+            convertToMorton(padded_matrices.padded_b, B_Morton, n);
+            strassen(n, A_Morton, B_Morton, C, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7, final_p_addresses);
             C = unpad_matrix(C, padded_matrices.padded_size, padded_matrices.original_size);
+        } else {
+            convertToMorton(A, A_Morton, n);
+            convertToMorton(B, B_Morton, n);
+            strassen(n, A_Morton, B_Morton, C, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7, final_p_addresses);
         }
 
         convertFromMorton(res, C, n);
@@ -140,11 +142,11 @@ int main() {
         elapsed_ns = (tock.tv_sec - tick.tv_sec) * 1000000000LL + (tock.tv_nsec - tick.tv_nsec);
         printf("For size %d, Naive CLOCK_REALTIME elapsed: %lld ns\n", orig_size, elapsed_ns);
          
-        clock_gettime(CLOCK_REALTIME, &tick);
-        bijk(A, B, D, orig_size, orig_size, orig_size, 10);
-        clock_gettime(CLOCK_REALTIME, &tock);
-        elapsed_ns = (tock.tv_sec - tick.tv_sec) * 1000000000LL + (tock.tv_nsec - tick.tv_nsec);
-        printf("For size %d, BIJK CLOCK_REALTIME elapsed: %lld ns\n", orig_size, elapsed_ns);
+        //clock_gettime(CLOCK_REALTIME, &tick);
+        //bijk(A, B, D, orig_size, orig_size, orig_size, 10);
+        //clock_gettime(CLOCK_REALTIME, &tock);
+        //elapsed_ns = (tock.tv_sec - tick.tv_sec) * 1000000000LL + (tock.tv_nsec - tick.tv_nsec);
+        //printf("For size %d, BIJK CLOCK_REALTIME elapsed: %lld ns\n", orig_size, elapsed_ns);
 
         free(A); free(B); free(C); free(A_Morton); free(B_Morton); free(res); 
         free(p1); free(p2); free(p3); free(p4); free(p5); free(p6); free(p7);
@@ -378,7 +380,7 @@ double* strassen (int size, double *A, double *B, double *C,
 
 double *pad_matrix(double *a, int tile_size, int size) {
   int total_size = tile_size + size;
-  double *res = calloc(total_size * total_size, sizeof(double));
+  double *res = (double *) calloc(total_size * total_size, sizeof(double));
   for (int i = 0; i < size; i++) {
     res[i] = a[i];
   }
@@ -390,9 +392,8 @@ double *pad_matrix(double *a, int tile_size, int size) {
 struct pad_struct pad_matrices(double *a, double *b, int tile_size, int size) {
   struct pad_struct ret;
   int total_size = tile_size * 16;
-//   printf("in pad_matrices. tile_size is %d, size is %d, and totalSize is %d\n", tile_size, size, total_size);
-  double *res_a = calloc(total_size * total_size, sizeof(double));
-  double *res_b = calloc(total_size * total_size, sizeof(double));
+  double *res_a = (double *) calloc(total_size * total_size, sizeof(double));
+  double *res_b = (double *) calloc(total_size * total_size, sizeof(double));
 
   for (int i = 0; i < size * size; i++) {
     res_a[i] = a[i];
@@ -407,8 +408,7 @@ struct pad_struct pad_matrices(double *a, double *b, int tile_size, int size) {
 }
 
 double* unpad_matrix(double *m, int padded_size, int orig_size) {
-    // printf("in unpad_matrix. padded_size = %d, orig_size = %d\n", padded_size, orig_size);
-    double *res = calloc(orig_size * orig_size, sizeof(double));
+    double *res = (double *) calloc(orig_size * orig_size, sizeof(double));
     for (int i = 0; i < orig_size * orig_size; i++) {
         res[i] = m[i];
     }
@@ -498,30 +498,18 @@ unsigned int S (unsigned int x, unsigned int y)
 
 void matrix_subtr (double *a, double *b, double *res, uint32_t size)
 {
+#pragma omp parallel for 
     for (uint32_t i = 0; i < size * size; i++) {
         res[i] = a[i] - b[i];
     }
-    // for (uint32_t i = 0; i < size * size; i++)
-    // {
-    //     for (uint32_t j = 0; j < size; j++)
-    //     {
-    //         res[i * size + j] = a[i * size + j] - b[i * size + j];
-    //     }
-    // }
 }
 
 void matrix_add (double *a, double *b, double *res, uint32_t size)
 {
+#pragma omp parallel for
     for (uint32_t i = 0; i < size * size; i++) {
         res[i] = a[i] + b[i];
     }
-    // for (uint32_t i = 0; i < size; i++)
-    // {
-    //     for (uint32_t j = 0; j < size; j++)
-    //     {
-    //         res[i * size + j] = a[i * size + j] + b[i * size + j];
-    //     }
-    // }
 }
 
 void naive (double *a, double *b, double *res, uint32_t size) {
@@ -555,6 +543,7 @@ void bijk(double *A, double *B, double *C, int m, int n, int p, int block) {
 
 void morton_naive (double *a, double *b, double *res, uint32_t size) {
     double r = 0.0;
+// #pragma omp parallel for
     for (uint32_t i = 0; i < size; i++) {
         for (uint32_t k = 0; k < size; k++) {
             r = a[i * size + k];

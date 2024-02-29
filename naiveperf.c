@@ -52,7 +52,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
+#include <time.h>
 #include <unistd.h>         // for usleep()
 #include <dlfcn.h>          // for dlopen() and dlsym()
 #include <sys/sysctl.h>     // for sysctl()
@@ -876,7 +876,6 @@ typedef struct {
     const char *names[EVENT_NAME_MAX]; /// name from pmc db
 } event_alias;
 
-/// Event names from /usr/share/kpep/<name>.plist
 static const event_alias profile_events[] = {
     {   "cycles", {
             "FIXED_CYCLES",                 // Apple A7-A15
@@ -917,6 +916,7 @@ static const event_alias profile_events[] = {
 //        }
 //    }
 };
+
 
 static kpep_event *get_event(kpep_db *db, const event_alias *alias) {
     for (usize j = 0; j < EVENT_NAME_MAX; j++) {
@@ -1268,82 +1268,33 @@ int main(int argc, const char * argv[]) {
         printf("Failed set thread counting: %d.\n", ret);
         return 1;
     }
+    srand(time(NULL));
+    int size;
+    sscanf(argv[1], "%d", &size);
+    double *A = (double *) calloc (size * size, sizeof (double));
+    double *B = (double *) calloc (size * size, sizeof (double));
+    double *C = (double *) calloc (size * size, sizeof (double));
+    for (int i = 0; i < size * size; i++) {
+      A[i] = i;
+      B[i] = i;
+    }
     
     // get counters before
     if ((ret = kpc_get_thread_counters(0, KPC_MAX_COUNTERS, counters_0))) {
         printf("Failed get thread counters before: %d.\n", ret);
         return 1;
     }
-    struct pad_struct padded_matrices;
-    int n;
-    sscanf(argv[1], "%d", &n);
-    printf("for size=%d\n", n);
-    double *A = (double *) calloc (n * n, sizeof (double));
-    double *B = (double *) calloc (n * n, sizeof (double));
-    double *C = (double *) calloc (n * n, sizeof (double));
-
-    for (int i = 0; i < n * n; i++) {
-      A[i] = i;
-      B[i] = i;
-    }
-    bool padded = false;
-    int newSize;
-    if (!power_of_two(n)) {
-      double temp = (double) n / 16;
-      if (temp != floor(temp)) {
-        TR = ceil(temp);
-        TC = ceil(temp);
-        padded_matrices = pad_matrices(A, B, TR, n);
-        padded = true;
-        newSize = padded_matrices.padded_size / 2;
-        n = padded_matrices.padded_size;
-      } else {
-        TR = temp;
-        TC = temp;
+   
+    double r = 0.0;
+    for (int i = 0; i < size; i++) {
+      for (int k = 0; k < size; k++) {
+        r = A[i * size + k];
+        for (int j = 0; j < size; j++) {
+          C[i * size + j] += r * B[k * size + j];
+        }
       }
     }
-    newSize = n / 2;
-    double *A_Morton = (double *) calloc (n * n, sizeof (double));
-    double *B_Morton = (double *) calloc (n * n, sizeof (double));
-    double *res = (double *) calloc (n * n, sizeof (double));
 
-    double *p1  = (double *) calloc (newSize * newSize, sizeof (double));
-    double *p2  = (double *) calloc (newSize * newSize, sizeof (double));
-    double *p3  = (double *) calloc (newSize * newSize, sizeof (double));
-    double *p4  = (double *) calloc (newSize * newSize, sizeof (double));
-    double *p5  = (double *) calloc (newSize * newSize, sizeof (double));
-    double *p6  = (double *) calloc (newSize * newSize, sizeof (double));
-    double *p7  = (double *) calloc (newSize * newSize, sizeof (double));
-
-    double *final_p1  = (double *) malloc (newSize * newSize * sizeof (double));
-    double *final_p2  = (double *) malloc (newSize * newSize * sizeof (double));
-    double *final_p3 = (double *) malloc (newSize * newSize * sizeof (double));
-    double *final_p4 = (double *) malloc (newSize * newSize * sizeof (double));
-    double *final_p5 = (double *) malloc (newSize * newSize * sizeof (double));
-    double *final_p6 = (double *) malloc (newSize * newSize * sizeof (double));
-    double *final_p7 = (double *) malloc (newSize * newSize * sizeof (double));
-    double *final_p_addresses[7] = {final_p1, final_p2, final_p3, final_p4, final_p5, final_p6, final_p7};
-
-    double *u1  = (double *) calloc (newSize * newSize, sizeof (double));
-    double *u3  = (double *) calloc (newSize * newSize, sizeof (double));
-    double *u2  = (double *) calloc (newSize * newSize, sizeof (double));
-    double *u5  = (double *) calloc (newSize * newSize, sizeof (double));
-    double *u4  = (double *) calloc (newSize * newSize, sizeof (double));
-    double *u6  = (double *) calloc (newSize * newSize, sizeof (double));
-    double *u7  = (double *) calloc (newSize * newSize, sizeof (double));
-
-    convertToMorton(A, A_Morton, n);
-    convertToMorton(B, B_Morton, n);
-
-    strassen(n, A_Morton, B_Morton, C, p1, p2, p3, p4, p5, p6, p7, u1, u2, u3, u4, u5, u6, u7, final_p_addresses);
-    
-    if (padded) {
-      C = unpad_matrix(C, padded_matrices.padded_size, padded_matrices.orig_size);
-    }
-
-    convertFromMorton(res, C, n);
-
-    
     // get counters after
     if ((ret = kpc_get_thread_counters(0, KPC_MAX_COUNTERS, counters_1))) {
         printf("Failed get thread counters after: %d.\n", ret);
